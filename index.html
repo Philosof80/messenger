@@ -8,6 +8,7 @@
 <title>Messenger by F1nPlay</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 
+<!-- Библиотеки -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -79,7 +80,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 }
 #fab-new-chat:hover{transform:scale(1.06)}
 
-/* Нижние вкладки */
+/* Вкладки */
 #bottom-tabs{height:58px;border-top:1px solid var(--line);display:flex;background:var(--surface);flex:none}
 .tab-btn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:500}
 .tab-btn span.tab-icon{font-size:19px;line-height:1}
@@ -144,15 +145,12 @@ button,input,textarea,select{font:inherit;color:inherit}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1500;padding:16px}
 .modal-body{background:var(--surface);border-radius:18px;padding:24px;width:100%;max-width:400px;text-align:center}
 
-/* Сканер QR */
 #qr-reader{width:100%;border-radius:14px;overflow:hidden;background:#000;margin-top:10px}
 
-/* Медиа окно кружочка */
 #circle-recorder{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 #circle-preview{width:260px;height:260px;border-radius:50%;object-fit:cover;border:4px solid #fff}
 .rec-timer{color:#fff;font-family:var(--mono);font-size:18px;font-weight:600}
 
-/* Звонок */
 #call-overlay{position:fixed;inset:0;background:#0c1117;z-index:1700;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
 #call-videos{position:relative;width:100%;max-width:760px;height:65vh;background:#000;border-radius:16px;overflow:hidden;margin-bottom:20px}
 #remote-video{width:100%;height:100%;object-fit:cover}
@@ -166,7 +164,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 
 <div id="app">
 
-  <!-- 1. Экран регистрации -->
+  <!-- Экран регистрации -->
   <div id="auth-screen" hidden>
     <div class="auth-box">
       <div class="auth-logo">💬</div>
@@ -196,7 +194,7 @@ button,input,textarea,select{font:inherit;color:inherit}
     </div>
   </div>
 
-  <!-- 2. Сайдбар -->
+  <!-- Сайдбар -->
   <aside id="sidebar">
     <div class="sidebar-header">
       <h2 id="sidebar-tab-title">Чаты</h2>
@@ -267,7 +265,7 @@ button,input,textarea,select{font:inherit;color:inherit}
     </nav>
   </aside>
 
-  <!-- 3. Правая панель -->
+  <!-- Правая панель -->
   <main id="main-view">
     <div id="empty-placeholder">
       <div class="bubble">Выберите чат или нажмите <b>+</b>, чтобы начать диалог</div>
@@ -389,46 +387,857 @@ button,input,textarea,select{font:inherit;color:inherit}
 </div>
 
 <script>
-(() => {
-"use strict";
+document.addEventListener("DOMContentLoaded", () => {
+  "use strict";
 
-const $ = id => document.getElementById(id);
-const te = new TextEncoder(), td = new TextDecoder();
+  const $ = id => document.getElementById(id);
+  const te = new TextEncoder(), td = new TextDecoder();
 
-function cleanPhone(p){
-  let s = (p || "").replace(/\D/g, "");
-  if (s.length === 11 && s.startsWith("8")) s = "7" + s.slice(1);
-  return s;
-}
-
-function b64(buf){
-  const b = new Uint8Array(buf); let s = "";
-  for (let i=0;i<b.length;i++) s += String.fromCharCode(b[i]);
-  return btoa(s);
-}
-function unb64(str){
-  const s = atob(str), b = new Uint8Array(s.length);
-  for (let i=0;i<s.length;i++) b[i] = s.charCodeAt(i);
-  return b;
-}
-
-function getMimeType(type){
-  const candidates = type === "video" 
-    ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
-    : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
-  for (const c of candidates){
-    if (window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+  function cleanPhone(p){
+    let s = (p || "").replace(/\D/g, "");
+    if (s.length === 11 && s.startsWith("8")) s = "7" + s.slice(1);
+    return s;
   }
-  return "";
-}
 
-/* ================= ДАННЫЕ ================= */
-let myPhone = localStorage.getItem("msgr_phone") || "";
-let myNick = localStorage.getItem("msgr_nick") || "";
-let myAvatar = localStorage.getItem("msgr_avatar") || "";
-let chats = JSON.parse(localStorage.getItem("msgr_chats") || "{}");
-let contacts = JSON.parse(localStorage.getItem("msgr_contacts") || "[]");
-let blockedUsers = JSON.parse(localStorage.getItem("msgr_blocked") || "[]");
+  function b64(buf){
+    const b = new Uint8Array(buf); let s = "";
+    for (let i=0;i<b.length;i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function unb64(str){
+    const s = atob(str), b = new Uint8Array(s.length);
+    for (let i=0;i<s.length;i++) b[i] = s.charCodeAt(i);
+    return b;
+  }
 
-function checkAutoDelete(){
-  const lastActive = parseInt(localStorage.getItem("msgr_
+  function getMimeType(type){
+    const candidates = type === "video" 
+      ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
+      : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+    for (const c of candidates){
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return "";
+  }
+
+  /* Состояние */
+  let myPhone = localStorage.getItem("msgr_phone") || "";
+  let myNick = localStorage.getItem("msgr_nick") || "";
+  let myAvatar = localStorage.getItem("msgr_avatar") || "";
+  let chats = JSON.parse(localStorage.getItem("msgr_chats") || "{}");
+  let contacts = JSON.parse(localStorage.getItem("msgr_contacts") || "[]");
+  let blockedUsers = JSON.parse(localStorage.getItem("msgr_blocked") || "[]");
+
+  /* Криптография */
+  let ME = null;
+  let sessionKeys = {};
+
+  async function initCrypto(){
+    try{
+      if (!window.crypto || !window.crypto.subtle) return;
+      const pair = await crypto.subtle.generateKey({name:"ECDH", namedCurve:"P-256"}, true, ["deriveBits"]);
+      const pubRaw = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
+      ME = { priv: pair.privateKey, pubRaw, pubB64: b64(pubRaw) };
+    }catch(e){
+      console.warn("Crypto init error:", e);
+    }
+  }
+
+  async function derivePeerKey(phone, peerPubB64){
+    try{
+      if (!ME || !ME.priv) return;
+      const peerPubRaw = unb64(peerPubB64);
+      const theirPub = await crypto.subtle.importKey("raw", peerPubRaw, {name:"ECDH", namedCurve:"P-256"}, false, []);
+      const bits = await crypto.subtle.deriveBits({name:"ECDH", public: theirPub}, ME.priv, 256);
+      const salt = new Uint8Array(32);
+      const ikm = await crypto.subtle.importKey("raw", bits, {name:"HKDF"}, false, ["deriveKey"]);
+      sessionKeys[phone] = await crypto.subtle.deriveKey(
+        {name:"HKDF", hash:"SHA-256", salt, info: te.encode("f1nplay-secure-session")},
+        ikm, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]
+      );
+    }catch(e){
+      console.error("Crypto error:", e);
+    }
+  }
+
+  async function encryptData(phone, kind, payload){
+    const k = sessionKeys[phone];
+    if (!k || !window.crypto || !window.crypto.subtle) return { kind, payload, raw: true };
+    try{
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const enc = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, te.encode(JSON.stringify({kind, payload})));
+      return { iv: b64(iv), data: b64(enc), ts: Date.now() };
+    }catch(e){
+      return { kind, payload, raw: true };
+    }
+  }
+
+  async function decryptData(phone, envelope){
+    if (envelope.raw) return { kind: envelope.kind, payload: envelope.payload };
+    const k = sessionKeys[phone];
+    if (!k || !window.crypto || !window.crypto.subtle) return { kind: envelope.kind, payload: envelope.payload };
+    try{
+      const iv = unb64(envelope.iv);
+      const data = unb64(envelope.data);
+      const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, k, data);
+      return JSON.parse(td.decode(dec));
+    }catch(e){
+      return { kind: envelope.kind, payload: envelope.payload };
+    }
+  }
+
+  /* PeerJS */
+  let peer = null;
+  let activeConnections = {};
+  let activeCall = null;
+  let pendingIncomingCall = null;
+  let localStream = null;
+  let activeChatPhone = null;
+
+  function getPeerId(phone){ return "f1nplay-app-" + cleanPhone(phone); }
+
+  function setupPeer(){
+    if (!myPhone) return;
+    const id = getPeerId(myPhone);
+
+    if (peer && !peer.destroyed) {
+      try { peer.destroy(); } catch(e){}
+    }
+
+    try{
+      peer = new Peer(id, {
+        debug: 1,
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun.cloudflare.com:3478" }
+          ]
+        }
+      });
+    }catch(e){
+      $("status-text").textContent = "Ошибка Peer";
+      return;
+    }
+
+    peer.on("open", () => {
+      $("status-text").textContent = "В сети";
+      $("status-text").style.color = "var(--ok)";
+    });
+
+    peer.on("disconnected", () => {
+      $("status-text").textContent = "Переподключение...";
+      $("status-text").style.color = "var(--warn)";
+      setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
+    });
+
+    peer.on("error", (err) => {
+      if (err.type === "unavailable-id"){
+        alert("Этот номер телефона уже открыт в другой вкладке!");
+        $("status-text").textContent = "Номер занят";
+        $("status-text").style.color = "var(--danger)";
+      } else if (err.type === "peer-unavailable"){
+        if (activeChatPhone){
+          appendSys("Собеседник сейчас не в сети.");
+          $("chat-peer-status").textContent = "не в сети";
+          $("chat-peer-status").style.color = "var(--muted)";
+        }
+      } else {
+        $("status-text").textContent = "В сети";
+        $("status-text").style.color = "var(--ok)";
+      }
+    });
+
+    peer.on("connection", conn => {
+      const incomingPhone = conn.peer.replace("f1nplay-app-", "");
+      if (blockedUsers.includes(incomingPhone)){
+        conn.close();
+        return;
+      }
+      activeConnections[incomingPhone] = conn;
+      wireIncomingConnection(incomingPhone, conn);
+    });
+
+    peer.on("call", call => {
+      const callerPhone = call.peer.replace("f1nplay-app-", "");
+      if (blockedUsers.includes(callerPhone)){
+        call.close();
+        return;
+      }
+      pendingIncomingCall = call;
+      $("inc-call-desc").textContent = "Звонит: " + (chats[callerPhone]?.nick || "+" + callerPhone);
+      $("modal-incoming-call").hidden = false;
+    });
+  }
+
+  function wireIncomingConnection(phone, conn){
+    conn.on("open", () => {
+      conn.send({
+        type: "handshake",
+        nick: myNick,
+        phone: myPhone,
+        avatar: myAvatar,
+        pubKey: ME ? ME.pubB64 : ""
+      });
+    });
+
+    conn.on("data", async data => {
+      if (blockedUsers.includes(phone)) return;
+
+      if (data.type === "handshake" || data.type === "handshake_ack"){
+        if (data.pubKey) await derivePeerKey(phone, data.pubKey);
+        upsertChat(phone, data.nick, data.avatar, "В сети");
+
+        if (data.type === "handshake"){
+          conn.send({
+            type: "handshake_ack",
+            nick: myNick,
+            phone: myPhone,
+            avatar: myAvatar,
+            pubKey: ME ? ME.pubB64 : ""
+          });
+        }
+
+        if (activeChatPhone === phone){
+          updateChatHeader(data.nick, phone, data.avatar);
+          $("chat-peer-status").textContent = "в сети";
+          $("chat-peer-status").style.color = "var(--ok)";
+        }
+        return;
+      }
+
+      if (data.type === "call_hangup"){
+        cleanUpCall();
+        return;
+      }
+
+      try{
+        const msg = await decryptData(phone, data);
+        upsertChat(phone, chats[phone]?.nick, chats[phone]?.avatar, msg.kind === "text" ? msg.payload : "[Медиа]");
+
+        if (activeChatPhone === phone){
+          appendMessage(msg, false);
+        }
+      }catch(e){
+        console.error(e);
+      }
+    });
+
+    conn.on("close", () => {
+      if (activeChatPhone === phone){
+        $("chat-peer-status").textContent = "был(а) недавно";
+        $("chat-peer-status").style.color = "var(--muted)";
+      }
+    });
+  }
+
+  /* Диалоги */
+  function upsertChat(phone, nick, avatar, lastMsg){
+    if (!phone) return;
+    const p = cleanPhone(phone);
+    chats[p] = {
+      phone: p,
+      nick: nick || chats[p]?.nick || ("+" + p),
+      avatar: avatar || chats[p]?.avatar || "",
+      lastMsg: lastMsg || chats[p]?.lastMsg || "",
+      time: new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
+    };
+    localStorage.setItem("msgr_chats", JSON.stringify(chats));
+    renderChatsList();
+    renderContactsList();
+  }
+
+  function renderChatsList(){
+    const box = $("chats-list");
+    if (!box) return;
+    box.innerHTML = "";
+    const list = Object.values(chats);
+    if (!list.length){
+      box.innerHTML = '<p style="text-align:center;padding:24px;color:var(--muted);font-size:13.5px">Нет диалогов.<br>Нажмите <b>+</b>, чтобы написать</p>';
+      return;
+    }
+    list.forEach(c => {
+      const el = document.createElement("div");
+      el.className = "chat-item";
+      const av = c.avatar ? `<img src="${c.avatar}" alt="Avatar">` : (c.nick ? c.nick[0].toUpperCase() : "?");
+      el.innerHTML = `
+        <div class="chat-avatar">${av}</div>
+        <div class="chat-meta">
+          <div class="chat-top">
+            <span class="chat-name">${c.nick}</span>
+            <span class="chat-time">${c.time || ""}</span>
+          </div>
+          <div class="chat-preview">${c.lastMsg || c.phone}</div>
+        </div>
+      `;
+      el.onclick = () => openChat(c.phone);
+      box.appendChild(el);
+    });
+  }
+
+  function renderContactsList(){
+    const box = $("contacts-list");
+    if (!box) return;
+    box.innerHTML = "";
+    const contactChats = Object.values(chats).filter(c => contacts.includes(c.phone));
+    if (!contactChats.length){
+      box.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:13.5px">Список контактов пуст</p>';
+      return;
+    }
+    contactChats.forEach(c => {
+      const el = document.createElement("div");
+      el.className = "chat-item";
+      el.style.borderRadius = "12px";
+      const av = c.avatar ? `<img src="${c.avatar}" alt="Avatar">` : (c.nick ? c.nick[0].toUpperCase() : "?");
+      el.innerHTML = `
+        <div class="chat-avatar">${av}</div>
+        <div class="chat-meta">
+          <span class="chat-name">${c.nick}</span>
+          <div style="font-size:12px;color:var(--muted);font-family:var(--mono)">+${c.phone}</div>
+        </div>
+      `;
+      el.onclick = () => { switchTab("chats"); openChat(c.phone); };
+      box.appendChild(el);
+    });
+  }
+
+  function openChat(phone){
+    activeChatPhone = cleanPhone(phone);
+    const c = chats[activeChatPhone] || { nick: "+" + activeChatPhone, phone: activeChatPhone, avatar: "" };
+    updateChatHeader(c.nick, c.phone, c.avatar);
+
+    checkContactSafetyBanner(activeChatPhone);
+
+    $("empty-placeholder").hidden = true;
+    $("active-chat-container").hidden = false;
+    $("log").innerHTML = "";
+    $("sidebar").classList.add("hide-mobile");
+
+    let conn = activeConnections[activeChatPhone];
+    if (!conn || !conn.open){
+      conn = peer.connect(getPeerId(activeChatPhone), { reliable: true });
+      activeConnections[activeChatPhone] = conn;
+      wireIncomingConnection(activeChatPhone, conn);
+    }
+  }
+
+  function checkContactSafetyBanner(phone){
+    const banner = $("contact-safety-banner");
+    if (!banner) return;
+    if (contacts.includes(phone) || phone === cleanPhone(myPhone)){
+      banner.hidden = true;
+    } else {
+      banner.hidden = false;
+    }
+  }
+
+  function updateChatHeader(nick, phone, avatar){
+    $("chat-peer-name").textContent = nick || ("+" + phone);
+    $("chat-peer-status").textContent = "в сети";
+    $("chat-peer-status").style.color = "var(--ok)";
+    const avBox = $("header-peer-avatar");
+    if (avatar) avBox.innerHTML = `<img src="${avatar}" alt="Avatar">`;
+    else avBox.textContent = nick ? nick[0].toUpperCase() : "?";
+  }
+
+  /* Баннер */
+  $("btn-banner-add").onclick = () => {
+    if (!activeChatPhone) return;
+    if (!contacts.includes(activeChatPhone)){
+      contacts.push(activeChatPhone);
+      localStorage.setItem("msgr_contacts", JSON.stringify(contacts));
+    }
+    $("contact-safety-banner").hidden = true;
+    renderContactsList();
+    alert("Контакт добавлен!");
+  };
+
+  $("btn-banner-block").onclick = () => {
+    if (!activeChatPhone) return;
+    if (confirm("Заблокировать этого пользователя?")){
+      blockedUsers.push(activeChatPhone);
+      localStorage.setItem("msgr_blocked", JSON.stringify(blockedUsers));
+
+      if (activeConnections[activeChatPhone]){
+        activeConnections[activeChatPhone].close();
+        delete activeConnections[activeChatPhone];
+      }
+      delete chats[activeChatPhone];
+      localStorage.setItem("msgr_chats", JSON.stringify(chats));
+
+      $("active-chat-container").hidden = true;
+      $("empty-placeholder").hidden = false;
+      renderChatsList();
+      renderContactsList();
+    }
+  };
+
+  /* Навигация */
+  function switchTab(tabId){
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+    $("tab-content-chats").hidden = (tabId !== "chats");
+    $("tab-content-contacts").hidden = (tabId !== "contacts");
+    $("tab-content-settings").hidden = (tabId !== "settings");
+
+    const titles = { chats: "Чаты", contacts: "Контакты", settings: "Настройки" };
+    $("sidebar-tab-title").textContent = titles[tabId] || "Чаты";
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.onclick = () => switchTab(btn.dataset.tab);
+  });
+
+  $("btn-back").onclick = () => { $("sidebar").classList.remove("hide-mobile"); };
+
+  /* Сообщения */
+  async function sendMessage(kind, payload){
+    const conn = activeConnections[activeChatPhone];
+    if (!conn || !conn.open){
+      alert("Собеседник оффлайн. Сообщение будет доставлено при подключении.");
+      return;
+    }
+    const envelope = await encryptData(activeChatPhone, kind, payload);
+    conn.send(envelope);
+    appendMessage({ kind, payload }, true);
+    upsertChat(activeChatPhone, chats[activeChatPhone]?.nick, chats[activeChatPhone]?.avatar, kind === "text" ? payload : "[Медиа]");
+  }
+
+  function appendMessage(msg, isMine){
+    const log = $("log");
+    const el = document.createElement("div");
+    el.className = "msg" + (isMine ? " mine" : "");
+
+    if (msg.kind === "text"){
+      const txt = document.createElement("div");
+      txt.textContent = msg.payload;
+      el.appendChild(txt);
+    } else if (msg.kind === "sticker"){
+      const st = document.createElement("div");
+      st.className = "sticker-img";
+      st.textContent = msg.payload;
+      el.appendChild(st);
+    } else if (msg.kind === "voice"){
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = msg.payload;
+      el.appendChild(audio);
+    } else if (msg.kind === "circle"){
+      const vid = document.createElement("video");
+      vid.className = "circle-video";
+      vid.src = msg.payload;
+      vid.autoplay = true;
+      vid.loop = true;
+      vid.playsInline = true;
+      vid.onclick = () => { vid.muted = !vid.muted; };
+      el.appendChild(vid);
+    } else if (msg.kind === "file"){
+      const f = msg.payload;
+      if (f.isImg){
+        const img = document.createElement("img");
+        img.className = "msg-img";
+        img.src = f.data;
+        img.onclick = () => window.open(f.data);
+        el.appendChild(img);
+      }
+      const a = document.createElement("a");
+      a.href = f.data;
+      a.download = f.name;
+      a.style.display = "block";
+      a.style.color = "inherit";
+      a.textContent = "📁 " + f.name + " (" + f.size + ")";
+      el.appendChild(a);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    el.appendChild(meta);
+
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function appendSys(text){
+    const el = document.createElement("div");
+    el.style.alignSelf = "center";
+    el.style.fontSize = "12px";
+    el.style.color = "var(--muted)";
+    el.textContent = text;
+    $("log").appendChild(el);
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  /* Голосовые */
+  let audioRec = null, audioChunks = [], isRecordingVoice = false;
+  $("btn-voice-rec").onclick = async () => {
+    if (isRecordingVoice){
+      audioRec.stop();
+      isRecordingVoice = false;
+      $("btn-voice-rec").style.color = "";
+      return;
+    }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      const mime = getMimeType("audio");
+      audioRec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      audioRec.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      audioRec.onstop = () => {
+        const blob = new Blob(audioChunks, { type: audioRec.mimeType || "audio/webm" });
+        const reader = new FileReader();
+        reader.onload = () => sendMessage("voice", reader.result);
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      audioRec.start();
+      isRecordingVoice = true;
+      $("btn-voice-rec").style.color = "var(--danger)";
+    }catch(e){
+      alert("Нет доступа к микрофону!");
+    }
+  };
+
+  /* Кружочки */
+  let circleRec = null, circleChunks = [], circleStream = null, circleTimerInterval = null;
+  $("btn-circle-rec").onclick = async () => {
+    try{
+      circleStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 480 } },
+        audio: true
+      });
+      $("circle-preview").srcObject = circleStream;
+      $("circle-recorder").hidden = false;
+      circleChunks = [];
+      const mime = getMimeType("video");
+      circleRec = mime ? new MediaRecorder(circleStream, { mimeType: mime }) : new MediaRecorder(circleStream);
+      circleRec.ondataavailable = e => { if (e.data.size > 0) circleChunks.push(e.data); };
+      circleRec.start();
+
+      let sec = 0;
+      $("circle-timer").textContent = "00:00";
+      circleTimerInterval = setInterval(() => {
+        sec++;
+        $("circle-timer").textContent = String(Math.floor(sec/60)).padStart(2,"0") + ":" + String(sec%60).padStart(2,"0");
+        if (sec >= 60) stopCircle(true);
+      }, 1000);
+    }catch(e){
+      alert("Нет доступа к камере!");
+    }
+  };
+
+  function stopCircle(send){
+    clearInterval(circleTimerInterval);
+    if (circleRec && circleRec.state !== "inactive"){
+      circleRec.onstop = () => {
+        if (send){
+          const blob = new Blob(circleChunks, { type: circleRec.mimeType || "video/webm" });
+          const reader = new FileReader();
+          reader.onload = () => sendMessage("circle", reader.result);
+          reader.readAsDataURL(blob);
+        }
+        if (circleStream) circleStream.getTracks().forEach(t => t.stop());
+      };
+      circleRec.stop();
+    }
+    $("circle-recorder").hidden = true;
+  }
+  $("btn-circle-stop").onclick = () => stopCircle(true);
+  $("btn-circle-cancel").onclick = () => stopCircle(false);
+
+  /* Файлы и стикеры */
+  $("file-input").onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024){ alert("Максимальный размер: 20 МБ"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      sendMessage("file", {
+        name: file.name,
+        size: (file.size/1024).toFixed(1) + " KB",
+        data: reader.result,
+        isImg: file.type.startsWith("image/")
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  $("btn-stickers").onclick = () => { $("stickers-popover").hidden = !$("stickers-popover").hidden; };
+  $("stickers-popover").onclick = e => {
+    if (e.target.tagName === "SPAN"){
+      sendMessage("sticker", e.target.textContent);
+      $("stickers-popover").hidden = true;
+    }
+  };
+
+  /* Звонки */
+  async function startCall(video){
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+      $("local-video").srcObject = localStream;
+      $("call-overlay").hidden = false;
+      $("call-peer-title").textContent = (video ? "Видеозвонок: " : "Аудиозвонок: ") + (chats[activeChatPhone]?.nick || "");
+
+      activeCall = peer.call(getPeerId(activeChatPhone), localStream);
+      activeCall.on("stream", rem => { $("remote-video").srcObject = rem; });
+      activeCall.on("close", cleanUpCall);
+    }catch(e){
+      alert("Ошибка вызова: " + e.message);
+    }
+  }
+
+  async function answerCall(video){
+    $("modal-incoming-call").hidden = true;
+    if (!pendingIncomingCall) return;
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+      $("local-video").srcObject = localStream;
+      $("call-overlay").hidden = false;
+      activeCall = pendingIncomingCall;
+      activeCall.answer(localStream);
+      activeCall.on("stream", rem => { $("remote-video").srcObject = rem; });
+      activeCall.on("close", cleanUpCall);
+    }catch(e){
+      alert("Ошибка доступа к камере/микрофону");
+    }
+  }
+
+  function cleanUpCall(){
+    if (activeCall) activeCall.close();
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    $("call-overlay").hidden = true;
+    $("remote-video").srcObject = null;
+    $("local-video").srcObject = null;
+    activeCall = null;
+  }
+
+  $("btn-call-audio").onclick = () => startCall(false);
+  $("btn-call-video").onclick = () => startCall(true);
+  $("btn-hangup").onclick = () => {
+    const conn = activeConnections[activeChatPhone];
+    if (conn && conn.open) conn.send({ type: "call_hangup" });
+    cleanUpCall();
+  };
+  $("btn-inc-video").onclick = () => answerCall(true);
+  $("btn-inc-audio").onclick = () => answerCall(false);
+  $("btn-inc-reject").onclick = () => {
+    $("modal-incoming-call").hidden = true;
+    if (pendingIncomingCall) pendingIncomingCall.close();
+    const caller = pendingIncomingCall?.peer.replace("f1nplay-app-", "");
+    if (caller && activeConnections[caller]) activeConnections[caller].send({ type: "call_hangup" });
+    pendingIncomingCall = null;
+  };
+
+  /* Сканер QR */
+  let html5QrScanner = null;
+
+  async function startQrScanner(){
+    const scannerBox = $("qr-scanner-box");
+    scannerBox.hidden = false;
+    $("btn-toggle-scan").querySelector("span").textContent = "Закрыть камеру";
+
+    if (!html5QrScanner){
+      html5QrScanner = new Html5Qrcode("qr-reader");
+    }
+
+    try{
+      await html5QrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decodedText) => {
+          let phone = decodedText.replace("msgr:", "").trim();
+          phone = cleanPhone(phone);
+          if (phone){
+            $("new-peer-phone").value = "+" + phone;
+            stopQrScanner();
+            $("modal-new-chat").hidden = true;
+            upsertChat(phone, "+" + phone, "", "");
+            openChat(phone);
+          }
+        },
+        () => {}
+      );
+    }catch(err){
+      console.error("Camera scan error:", err);
+      alert("Не удалось запустить камеру для сканирования: " + err);
+      stopQrScanner();
+    }
+  }
+
+  async function stopQrScanner(){
+    if (html5QrScanner && html5QrScanner.isScanning){
+      try{
+        await html5QrScanner.stop();
+      }catch(e){}
+    }
+    $("qr-scanner-box").hidden = true;
+    $("btn-toggle-scan").querySelector("span").textContent = "Сканировать QR-код камерой";
+  }
+
+  $("btn-toggle-scan").onclick = () => {
+    if (html5QrScanner && html5QrScanner.isScanning){
+      stopQrScanner();
+    } else {
+      startQrScanner();
+    }
+  };
+
+  /* Новый чат (+) */
+  $("fab-new-chat").onclick = () => {
+    $("new-peer-phone").value = "";
+    stopQrScanner();
+    $("modal-new-chat").hidden = false;
+    $("new-peer-phone").focus();
+  };
+  $("btn-close-new-chat").onclick = () => {
+    stopQrScanner();
+    $("modal-new-chat").hidden = true;
+  };
+  $("btn-start-new-chat").onclick = () => {
+    const p = cleanPhone($("new-peer-phone").value);
+    if (!p || p === cleanPhone(myPhone)){
+      alert("Введите корректный номер собеседника!");
+      return;
+    }
+    stopQrScanner();
+    $("modal-new-chat").hidden = true;
+    upsertChat(p, "+" + p, "", "");
+    openChat(p);
+  };
+
+  /* Настройки */
+  function renderSettings(){
+    $("settings-phone-label").textContent = "+" + myPhone;
+    $("settings-nick-input").value = myNick;
+    $("settings-avatar-img").src = myAvatar || "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";
+    $("settings-autodelete-select").value = localStorage.getItem("msgr_autodelete_months") || "6";
+  }
+
+  $("btn-save-settings-nick").onclick = () => {
+    const n = $("settings-nick-input").value.trim();
+    if (n){
+      myNick = n;
+      localStorage.setItem("msgr_nick", myNick);
+      alert("Имя сохранено!");
+    }
+  };
+
+  $("btn-change-avatar").onclick = () => $("settings-avatar-file").click();
+  $("settings-avatar-file").onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      myAvatar = reader.result;
+      localStorage.setItem("msgr_avatar", myAvatar);
+      $("settings-avatar-img").src = myAvatar;
+    };
+    reader.readAsDataURL(f);
+  };
+
+  $("settings-autodelete-select").onchange = e => {
+    localStorage.setItem("msgr_autodelete_months", e.target.value);
+    alert("Период автоудаления обновлен.");
+  };
+
+  $("btn-logout").onclick = () => {
+    if (confirm("Выйти из аккаунта? Все локальные данные будут стёрты.")){
+      localStorage.clear();
+      location.reload();
+    }
+  };
+
+  $("btn-open-my-qr").onclick = () => {
+    $("qr-box").innerHTML = "";
+    new QRCode($("qr-box"), { text: "msgr:" + myPhone, width: 200, height: 200 });
+    $("modal-qr").hidden = false;
+  };
+  $("btn-close-qr").onclick = () => { $("modal-qr").hidden = true; };
+
+  /* Регистрация */
+  let tempAvatar = "";
+
+  $("btn-next-step").onclick = () => {
+    const p = cleanPhone($("reg-phone").value);
+    if (!p || p.length < 10){
+      alert("Введите правильный номер телефона!");
+      return;
+    }
+    $("auth-step-1").hidden = true;
+    $("auth-step-2").hidden = false;
+  };
+
+  $("picker-avatar-btn").onclick = () => $("reg-avatar-input").click();
+  $("reg-avatar-input").onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      tempAvatar = reader.result;
+      $("reg-avatar-img").src = tempAvatar;
+      $("reg-avatar-img").hidden = false;
+      $("picker-avatar-placeholder").hidden = true;
+    };
+    reader.readAsDataURL(f);
+  };
+
+  $("btn-finish-auth").onclick = () => {
+    const n = $("reg-nick").value.trim();
+    const p = cleanPhone($("reg-phone").value);
+    if (!n){
+      alert("Введите ник или имя!");
+      return;
+    }
+    myPhone = p;
+    myNick = n;
+    myAvatar = tempAvatar;
+    localStorage.setItem("msgr_phone", myPhone);
+    localStorage.setItem("msgr_nick", myNick);
+    localStorage.setItem("msgr_avatar", myAvatar);
+    localStorage.setItem("msgr_last_active", Date.now().toString());
+
+    $("auth-screen").hidden = true;
+    initApp();
+  };
+
+  /* Отправка из поля */
+  $("composer").onsubmit = e => {
+    e.preventDefault();
+    const draft = $("draft");
+    const txt = draft.value.trim();
+    if (!txt) return;
+    sendMessage("text", txt);
+    draft.value = "";
+    draft.style.height = "auto";
+    $("btn-send").disabled = true;
+  };
+
+  $("draft").oninput = e => {
+    $("btn-send").disabled = !e.target.value.trim();
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  };
+
+  /* Инициализация */
+  async function initApp(){
+    await initCrypto();
+    setupPeer();
+    renderChatsList();
+    renderContactsList();
+    renderSettings();
+  }
+
+  function start(){
+    if (!myPhone || !myNick){
+      $("auth-screen").hidden = false;
+    } else {
+      $("auth-screen").hidden = true;
+      initApp();
+    }
+  }
+
+  start();
+});
+</script>
+</body>
+</html>
