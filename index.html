@@ -505,20 +505,38 @@ function getPeerId(phone){ return "f1nplay-app-" + cleanPhone(phone); }
 function setupPeer(){
   if (!myPhone) return;
   const id = getPeerId(myPhone);
-  if (peer && !peer.destroyed) peer.destroy();
+  if (peer && !peer.destroyed) {
+    try { peer.destroy(); } catch(e){}
+  }
 
+  // Явные настройки хоста PeerJS и STUN
   peer = new Peer(id, {
-    debug: 1,
+    host: "0.peerjs.com",
+    secure: true,
+    port: 443,
+    path: "/",
+    pingInterval: 5000,
     config: {
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
         { urls: "stun:stun.cloudflare.com:3478" }
       ]
     }
   });
 
+  // Таймаут: если за 8 секунд сервер не ответил — пробуем переподключиться
+  const connectTimer = setTimeout(() => {
+    if ($("status-text").textContent === "Подключение...") {
+      $("status-text").textContent = "Сбой сети, повторяем...";
+      $("status-text").style.color = "var(--warn)";
+      if (peer && !peer.destroyed) peer.reconnect();
+    }
+  }, 8000);
+
   peer.on("open", () => {
+    clearTimeout(connectTimer);
     $("status-text").textContent = "В сети";
     $("status-text").style.color = "var(--ok)";
   });
@@ -526,22 +544,28 @@ function setupPeer(){
   peer.on("disconnected", () => {
     $("status-text").textContent = "Переподключение...";
     $("status-text").style.color = "var(--warn)";
-    setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
+    setTimeout(() => { 
+      if (peer && !peer.destroyed) peer.reconnect(); 
+    }, 2000);
   });
 
   peer.on("error", (err) => {
-    console.warn("Peer error:", err.type);
-    if (err.type === "peer-unavailable"){
+    console.error("PeerJS error:", err);
+    clearTimeout(connectTimer);
+
+    if (err.type === "unavailable-id"){
+      alert("Этот номер телефона уже открыт в другой вкладке!");
+      $("status-text").textContent = "Номер занят";
+      $("status-text").style.color = "var(--danger)";
+    } else if (err.type === "peer-unavailable"){
       if (activeChatPhone){
         appendSys("Собеседник сейчас не в сети.");
         $("chat-peer-status").textContent = "не в сети";
         $("chat-peer-status").style.color = "var(--muted)";
       }
-    } else if (err.type === "unavailable-id"){
-      alert("Этот номер телефона уже запущен в другой вкладке или окне!");
     } else {
-      $("status-text").textContent = "В сети";
-      $("status-text").style.color = "var(--ok)";
+      $("status-text").textContent = "Ошибка сети";
+      $("status-text").style.color = "var(--danger)";
     }
   });
 
