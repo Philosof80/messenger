@@ -8,7 +8,6 @@
 <title>Messenger by F1nPlay</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 
-<!-- Библиотеки: P2P-сеть, Генератор QR и Сканер QR через камеру -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -184,7 +183,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 
       <div id="auth-step-2" hidden>
         <div class="avatar-picker" id="picker-avatar-btn" title="Выбрать фото">
-          <img id="reg-avatar-img" hidden>
+          <img id="reg-avatar-img" hidden alt="Avatar">
           <span id="picker-avatar-placeholder" style="font-size:28px">📷</span>
           <input type="file" id="reg-avatar-input" accept="image/*" hidden>
         </div>
@@ -318,7 +317,7 @@ button,input,textarea,select{font:inherit;color:inherit}
     </div>
   </main>
 
-  <!-- Модалка: Новый чат со встроенным сканером камеры -->
+  <!-- Модалка: Новый чат -->
   <div class="modal" id="modal-new-chat" hidden>
     <div class="modal-body">
       <h3 style="margin:0 0 10px">Новый чат</h3>
@@ -332,7 +331,6 @@ button,input,textarea,select{font:inherit;color:inherit}
         📷 <span>Сканировать QR-код камерой</span>
       </button>
 
-      <!-- Окно видоискателя сканера -->
       <div id="qr-scanner-box" hidden style="margin-top:12px">
         <div id="qr-reader"></div>
         <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0">Наведите камеру на QR-код профиля</p>
@@ -433,262 +431,4 @@ let contacts = JSON.parse(localStorage.getItem("msgr_contacts") || "[]");
 let blockedUsers = JSON.parse(localStorage.getItem("msgr_blocked") || "[]");
 
 function checkAutoDelete(){
-  const lastActive = parseInt(localStorage.getItem("msgr_last_active") || "0", 10);
-  const months = parseInt(localStorage.getItem("msgr_autodelete_months") || "6", 10);
-  if (lastActive && months > 0){
-    const diffMs = Date.now() - lastActive;
-    if (diffMs > months * 30 * 24 * 60 * 60 * 1000){
-      localStorage.clear();
-      alert("Аккаунт был удалён из-за отсутствия активности.");
-      location.reload();
-      return true;
-    }
-  }
-  localStorage.setItem("msgr_last_active", Date.now().toString());
-  return false;
-}
-
-/* ================= E2EE ШИФРОВАНИЕ ================= */
-let ME = null;
-let sessionKeys = {};
-
-async function initCrypto(){
-  const pair = await crypto.subtle.generateKey({name:"ECDH", namedCurve:"P-256"}, true, ["deriveBits"]);
-  const pubRaw = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
-  ME = { priv: pair.privateKey, pubRaw, pubB64: b64(pubRaw) };
-}
-
-async function derivePeerKey(phone, peerPubB64){
-  try{
-    const peerPubRaw = unb64(peerPubB64);
-    const theirPub = await crypto.subtle.importKey("raw", peerPubRaw, {name:"ECDH", namedCurve:"P-256"}, false, []);
-    const bits = await crypto.subtle.deriveBits({name:"ECDH", public: theirPub}, ME.priv, 256);
-    const salt = new Uint8Array(32);
-    const ikm = await crypto.subtle.importKey("raw", bits, {name:"HKDF"}, false, ["deriveKey"]);
-    sessionKeys[phone] = await crypto.subtle.deriveKey(
-      {name:"HKDF", hash:"SHA-256", salt, info: te.encode("f1nplay-secure-session")},
-      ikm, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]
-    );
-  }catch(e){
-    console.error("Crypto error:", e);
-  }
-}
-
-async function encryptData(phone, kind, payload){
-  const k = sessionKeys[phone];
-  if (!k) return { kind, payload, raw: true };
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const enc = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, te.encode(JSON.stringify({kind, payload})));
-  return { iv: b64(iv), data: b64(enc), ts: Date.now() };
-}
-
-async function decryptData(phone, envelope){
-  if (envelope.raw) return { kind: envelope.kind, payload: envelope.payload };
-  const k = sessionKeys[phone];
-  if (!k) return { kind: envelope.kind, payload: envelope.payload };
-  const iv = unb64(envelope.iv);
-  const data = unb64(envelope.data);
-  const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, k, data);
-  return JSON.parse(td.decode(dec));
-}
-
-/* ================= СЕТЬ PEERJS ================= */
-let peer = null;
-let activeConnections = {};
-let activeCall = null;
-let pendingIncomingCall = null;
-let localStream = null;
-let activeChatPhone = null;
-
-function getPeerId(phone){ return "f1nplay-app-" + cleanPhone(phone); }
-
-function setupPeer(){
-  if (!myPhone) return;
-  const id = getPeerId(myPhone);
-  if (peer && !peer.destroyed) {
-    try { peer.destroy(); } catch(e){}
-  }
-
-  // Явные настройки хоста PeerJS и STUN
-  peer = new Peer(id, {
-    host: "0.peerjs.com",
-    secure: true,
-    port: 443,
-    path: "/",
-    pingInterval: 5000,
-    config: {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun.cloudflare.com:3478" }
-      ]
-    }
-  });
-
-  // Таймаут: если за 8 секунд сервер не ответил — пробуем переподключиться
-  const connectTimer = setTimeout(() => {
-    if ($("status-text").textContent === "Подключение...") {
-      $("status-text").textContent = "Сбой сети, повторяем...";
-      $("status-text").style.color = "var(--warn)";
-      if (peer && !peer.destroyed) peer.reconnect();
-    }
-  }, 8000);
-
-  peer.on("open", () => {
-    clearTimeout(connectTimer);
-    $("status-text").textContent = "В сети";
-    $("status-text").style.color = "var(--ok)";
-  });
-
-  peer.on("disconnected", () => {
-    $("status-text").textContent = "Переподключение...";
-    $("status-text").style.color = "var(--warn)";
-    setTimeout(() => { 
-      if (peer && !peer.destroyed) peer.reconnect(); 
-    }, 2000);
-  });
-
-  peer.on("error", (err) => {
-    console.error("PeerJS error:", err);
-    clearTimeout(connectTimer);
-
-    if (err.type === "unavailable-id"){
-      alert("Этот номер телефона уже открыт в другой вкладке!");
-      $("status-text").textContent = "Номер занят";
-      $("status-text").style.color = "var(--danger)";
-    } else if (err.type === "peer-unavailable"){
-      if (activeChatPhone){
-        appendSys("Собеседник сейчас не в сети.");
-        $("chat-peer-status").textContent = "не в сети";
-        $("chat-peer-status").style.color = "var(--muted)";
-      }
-    } else {
-      $("status-text").textContent = "Ошибка сети";
-      $("status-text").style.color = "var(--danger)";
-    }
-  });
-
-  peer.on("connection", conn => {
-    const incomingPhone = conn.peer.replace("f1nplay-app-", "");
-    if (blockedUsers.includes(incomingPhone)){
-      conn.close();
-      return;
-    }
-    activeConnections[incomingPhone] = conn;
-    wireIncomingConnection(incomingPhone, conn);
-  });
-
-  peer.on("call", call => {
-    const callerPhone = call.peer.replace("f1nplay-app-", "");
-    if (blockedUsers.includes(callerPhone)){
-      call.close();
-      return;
-    }
-    pendingIncomingCall = call;
-    $("inc-call-desc").textContent = "Звонит: " + (chats[callerPhone]?.nick || "+" + callerPhone);
-    $("modal-incoming-call").hidden = false;
-  });
-}
-
-function wireIncomingConnection(phone, conn){
-  conn.on("open", () => {
-    conn.send({
-      type: "handshake",
-      nick: myNick,
-      phone: myPhone,
-      avatar: myAvatar,
-      pubKey: ME.pubB64
-    });
-  });
-
-  conn.on("data", async data => {
-    if (blockedUsers.includes(phone)) return;
-
-    if (data.type === "handshake" || data.type === "handshake_ack"){
-      await derivePeerKey(phone, data.pubKey);
-      upsertChat(phone, data.nick, data.avatar, "В сети");
-
-      if (data.type === "handshake"){
-        conn.send({
-          type: "handshake_ack",
-          nick: myNick,
-          phone: myPhone,
-          avatar: myAvatar,
-          pubKey: ME.pubB64
-        });
-      }
-
-      if (activeChatPhone === phone){
-        updateChatHeader(data.nick, phone, data.avatar);
-        $("chat-peer-status").textContent = "в сети";
-        $("chat-peer-status").style.color = "var(--ok)";
-      }
-      return;
-    }
-
-    if (data.type === "call_hangup"){
-      cleanUpCall();
-      return;
-    }
-
-    try{
-      const msg = await decryptData(phone, data);
-      upsertChat(phone, chats[phone]?.nick, chats[phone]?.avatar, msg.kind === "text" ? msg.payload : "[Медиа]");
-
-      if (activeChatPhone === phone){
-        appendMessage(msg, false);
-      }
-    }catch(e){
-      console.error(e);
-    }
-  });
-
-  conn.on("close", () => {
-    if (activeChatPhone === phone){
-      $("chat-peer-status").textContent = "был(а) недавно";
-      $("chat-peer-status").style.color = "var(--muted)";
-    }
-  });
-}
-
-/* ================= ДИАЛОГИ И КОНТАКТЫ ================= */
-function upsertChat(phone, nick, avatar, lastMsg){
-  if (!phone) return;
-  const p = cleanPhone(phone);
-  chats[p] = {
-    phone: p,
-    nick: nick || chats[p]?.nick || ("+" + p),
-    avatar: avatar || chats[p]?.avatar || "",
-    lastMsg: lastMsg || chats[p]?.lastMsg || "",
-    time: new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
-  };
-  localStorage.setItem("msgr_chats", JSON.stringify(chats));
-  renderChatsList();
-  renderContactsList();
-}
-
-function renderChatsList(){
-  const box = $("chats-list");
-  box.innerHTML = "";
-  const list = Object.values(chats);
-  if (!list.length){
-    box.innerHTML = '<p style="text-align:center;padding:24px;color:var(--muted);font-size:13.5px">Нет диалогов.<br>Нажмите <b>+</b>, чтобы написать</p>';
-    return;
-  }
-  list.forEach(c => {
-    const el = document.createElement("div");
-    el.className = "chat-item";
-    const av = c.avatar ? `<img src="${c.avatar}">` : (c.nick ? c.nick[0].toUpperCase() : "?");
-    el.innerHTML = `
-      <div class="chat-avatar">${av}</div>
-      <div class="chat-meta">
-        <div class="chat-top">
-          <span class="chat-name">${c.nick}</span>
-          <span class="chat-time">${c.time || ""}</span>
-        </div>
-        <div class="chat-preview">${c.lastMsg || c.phone}</div>
-      </div>
-    `;
-    el.onclick = () => openChat(c.phone);
-    box.appendChild
+  const lastActive = parseInt(localStorage.getItem("msgr_
