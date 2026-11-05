@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#17212b">
+<title>Messenger by F1nPlay</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<!-- Библиотеки: P2P-сеть, Генератор QR и Сканер QR через камеру -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+:root{
+  --bg:#0e1621; --surface:#17212b; --surface-2:#242f3d;
+  --ink:#f5f5f5; --muted:#7f91a4; --line:#101921;
+  --accent:#2b5278; --telegram-blue:#2481cc; --accent-ink:#ffffff;
+  --ok:#4faf82; --warn:#c8912f; --danger:#e53935;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",monospace;
+}
+@media (prefers-color-scheme:light){
+  :root{
+    --bg:#f0f2f5; --surface:#ffffff; --surface-2:#f4f5f7;
+    --ink:#1c242c; --muted:#707f8d; --line:#e3e7eb;
+    --accent:#3390ec; --telegram-blue:#2481cc; --accent-ink:#ffffff;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+
+#app{height:100vh;display:flex;overflow:hidden;position:relative}
+
+/* 1. Регистрация */
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{width:100%;max-width:390px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:32px 28px;text-align:center;box-shadow:0 12px 36px rgba(0,0,0,0.25)}
+.auth-logo{font-size:48px;margin-bottom:12px}
+.auth-title{font-size:22px;font-weight:600;margin:0 0 6px}
+.auth-sub{font-size:13.5px;color:var(--muted);margin:0 0 24px}
+.form-group{text-align:left;margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:6px;letter-spacing:0.04em}
+.input-text{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink);font-size:15px}
+.input-text:focus{border-color:var(--telegram-blue);outline:none}
+.btn-primary{width:100%;padding:12px;border:none;border-radius:12px;background:var(--telegram-blue);color:#fff;font-weight:600;font-size:15px;cursor:pointer;margin-top:10px;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+.avatar-picker{width:86px;height:86px;border-radius:50%;margin:0 auto 16px;background:var(--surface-2);border:2px dashed var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.avatar-picker img{width:100%;height:100%;object-fit:cover}
+
+/* 2. Сайдбар */
+#sidebar{width:360px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;position:relative}
+@media (max-width:768px){
+  #sidebar{width:100%;position:absolute;inset:0;z-index:20;transition:transform .25s ease}
+  #sidebar.hide-mobile{transform:translateX(-100%)}
+}
+.sidebar-header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.sidebar-header h2{margin:0;font-size:18px;font-weight:600}
+.sidebar-content{flex:1;overflow-y:auto;position:relative}
+
+/* Список чатов */
+.chat-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s}
+.chat-item:hover{background:var(--surface-2)}
+.chat-avatar{width:48px;height:48px;border-radius:50%;background:var(--surface-2);flex:none;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;overflow:hidden;color:var(--telegram-blue)}
+.chat-avatar img{width:100%;height:100%;object-fit:cover}
+.chat-meta{flex:1;min-width:0}
+.chat-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.chat-name{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-time{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.chat-preview{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Кнопка (+) */
+#fab-new-chat{
+  position:absolute;right:18px;bottom:72px;width:54px;height:54px;border-radius:50%;
+  background:var(--telegram-blue);color:#ffffff;border:none;box-shadow:0 4px 16px rgba(36,129,204,0.45);
+  display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;z-index:30;transition:transform .2s;
+}
+#fab-new-chat:hover{transform:scale(1.06)}
+
+/* Нижние вкладки */
+#bottom-tabs{height:58px;border-top:1px solid var(--line);display:flex;background:var(--surface);flex:none}
+.tab-btn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:500}
+.tab-btn span.tab-icon{font-size:19px;line-height:1}
+.tab-btn.active{color:var(--telegram-blue)}
+
+/* 3. Основная правая панель */
+#main-view{flex:1;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+#empty-placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:24px}
+#empty-placeholder .bubble{background:var(--surface);padding:14px 22px;border-radius:24px;border:1px solid var(--line);font-size:14.5px}
+
+/* Баннер безопасности контакта */
+#contact-safety-banner{
+  background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+.safety-title{font-size:13px;color:var(--muted)}
+.safety-btns{display:flex;gap:8px}
+.btn-sm{padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;border:none}
+.btn-sm-add{background:var(--telegram-blue);color:#fff}
+.btn-sm-block{background:var(--danger);color:#fff}
+
+/* Переписка */
+#active-chat-container{flex:1;display:flex;flex-direction:column;height:100%}
+#chat-header{height:60px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:12px;flex:none}
+#btn-back{display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:6px;color:var(--muted)}
+@media (max-width:768px){#btn-back{display:block}}
+.peer-details{flex:1;min-width:0}
+.peer-details b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peer-details span{font-size:12px;color:var(--ok)}
+.header-actions{display:flex;gap:6px}
+.icon-btn{background:none;border:none;padding:8px;border-radius:50%;cursor:pointer;font-size:18px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:var(--surface-2);color:var(--telegram-blue)}
+
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:min(80%,540px);padding:9px 13px;border-radius:16px;background:var(--surface);border:1px solid var(--line);align-self:flex-start;overflow-wrap:anywhere}
+.msg.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.msg .meta{font-family:var(--mono);font-size:10px;opacity:.7;margin-top:4px;text-align:right}
+.msg-img{max-width:260px;max-height:260px;border-radius:10px;object-fit:cover;cursor:pointer;margin-bottom:4px}
+.circle-video{width:220px;height:220px;border-radius:50%;object-fit:cover;overflow:hidden;border:3px solid var(--telegram-blue);cursor:pointer}
+.sticker-img{font-size:52px;line-height:1;user-select:none;display:inline-block}
+
+#composer{display:flex;gap:8px;align-items:flex-end;padding:10px 14px;background:var(--surface);border-top:1px solid var(--line);position:relative}
+#draft{flex:1;resize:none;max-height:130px;min-height:42px;padding:10px 14px;border:1px solid var(--line);border-radius:20px;background:var(--surface-2);font-size:14.5px;line-height:1.4}
+#draft:focus{outline:none;border-color:var(--telegram-blue)}
+#btn-send{width:42px;height:42px;border-radius:50%;background:var(--telegram-blue);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+#btn-send:disabled{opacity:.4;cursor:default}
+
+/* 4. Настройки */
+#settings-view{padding:24px 20px;overflow-y:auto;flex:1}
+.settings-wrap{max-width:480px;margin:0 auto}
+.settings-avatar-box{text-align:center;margin-bottom:24px}
+.settings-avatar{width:96px;height:96px;border-radius:50%;margin:0 auto 10px;background:var(--surface-2);border:2px solid var(--telegram-blue);overflow:hidden;cursor:pointer}
+.settings-avatar img{width:100%;height:100%;object-fit:cover}
+.card{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:600;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;margin-bottom:12px}
+
+#stickers-popover{position:absolute;bottom:68px;left:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);display:grid;grid-template-columns:repeat(5,42px);gap:8px;font-size:26px;z-index:100}
+#stickers-popover span{cursor:pointer;text-align:center;transition:transform .15s}
+#stickers-popover span:hover{transform:scale(1.25)}
+
+/* Модальные окна */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1500;padding:16px}
+.modal-body{background:var(--surface);border-radius:18px;padding:24px;width:100%;max-width:400px;text-align:center}
+
+/* Сканер QR */
+#qr-reader{width:100%;border-radius:14px;overflow:hidden;background:#000;margin-top:10px}
+
+/* Медиа окно кружочка */
+#circle-recorder{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#circle-preview{width:260px;height:260px;border-radius:50%;object-fit:cover;border:4px solid #fff}
+.rec-timer{color:#fff;font-family:var(--mono);font-size:18px;font-weight:600}
+
+/* Звонок */
+#call-overlay{position:fixed;inset:0;background:#0c1117;z-index:1700;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+#call-videos{position:relative;width:100%;max-width:760px;height:65vh;background:#000;border-radius:16px;overflow:hidden;margin-bottom:20px}
+#remote-video{width:100%;height:100%;object-fit:cover}
+#local-video{position:absolute;bottom:16px;right:16px;width:130px;height:180px;object-fit:cover;border-radius:10px;border:2px solid #fff;background:#222}
+.call-actions{display:flex;gap:16px;align-items:center}
+.btn-round{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:20px}
+.btn-hangup{background:var(--danger);color:#fff}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- 1. Экран регистрации -->
+  <div id="auth-screen" hidden>
+    <div class="auth-box">
+      <div class="auth-logo">💬</div>
+      <h1 class="auth-title">Вход в Messenger</h1>
+      <p class="auth-sub">Регистрация по номеру телефона для связи с собеседниками.</p>
+      
+      <div id="auth-step-1">
+        <div class="form-group">
+          <label for="reg-phone">Номер телефона</label>
+          <input class="input-text" id="reg-phone" placeholder="+7 999 123-45-67" autocomplete="tel">
+        </div>
+        <button class="btn-primary" id="btn-next-step">Продолжить</button>
+      </div>
+
+      <div id="auth-step-2" hidden>
+        <div class="avatar-picker" id="picker-avatar-btn" title="Выбрать фото">
+          <img id="reg-avatar-img" hidden>
+          <span id="picker-avatar-placeholder" style="font-size:28px">📷</span>
+          <input type="file" id="reg-avatar-input" accept="image/*" hidden>
+        </div>
+        <div class="form-group">
+          <label for="reg-nick">Ваш Ник / Имя</label>
+          <input class="input-text" id="reg-nick" placeholder="Например: Алекс" maxlength="30">
+        </div>
+        <button class="btn-primary" id="btn-finish-auth">Завершить регистрацию</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Сайдбар -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <h2 id="sidebar-tab-title">Чаты</h2>
+      <span id="status-text" style="font-size:12px;color:var(--muted)">Подключение...</span>
+    </div>
+
+    <div class="sidebar-content" id="tab-content-chats">
+      <div id="chats-list"></div>
+      <button id="fab-new-chat" title="Новый чат">+</button>
+    </div>
+
+    <div class="sidebar-content" id="tab-content-contacts" hidden>
+      <div id="contacts-list" style="padding:12px"></div>
+    </div>
+
+    <div class="sidebar-content" id="tab-content-settings" hidden>
+      <div id="settings-view">
+        <div class="settings-wrap">
+          <div class="settings-avatar-box">
+            <div class="settings-avatar" id="btn-change-avatar" title="Сменить фото">
+              <img id="settings-avatar-img" src="" alt="Avatar">
+              <input type="file" id="settings-avatar-file" accept="image/*" hidden>
+            </div>
+            <b id="settings-phone-label" style="font-size:16px;color:var(--muted)">+7...</b>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Имя профиля</div>
+            <div class="form-group" style="margin-bottom:8px">
+              <input class="input-text" id="settings-nick-input" placeholder="Ваш ник">
+            </div>
+            <button class="btn-primary" id="btn-save-settings-nick" style="padding:8px 14px">Сохранить имя</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Автоудаление аккаунта</div>
+            <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">Если аккаунт не используется указанный срок, он будет очищен.</p>
+            <select class="input-text" id="settings-autodelete-select">
+              <option value="1">Через 1 месяц</option>
+              <option value="3">Через 3 месяца</option>
+              <option value="6" selected>Через 6 месяцев</option>
+              <option value="0">Никогда</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Безопасность</div>
+            <button class="btn-primary" id="btn-open-my-qr" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);margin-bottom:8px">Показать мой QR-код</button>
+            <button class="btn-primary" id="btn-logout" style="background:var(--danger)">Выйти из аккаунта</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav id="bottom-tabs">
+      <button class="tab-btn active" data-tab="chats">
+        <span class="tab-icon">💬</span>
+        <span>Чаты</span>
+      </button>
+      <button class="tab-btn" data-tab="contacts">
+        <span class="tab-icon">👥</span>
+        <span>Контакты</span>
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span class="tab-icon">⚙️</span>
+        <span>Настройки</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- 3. Правая панель -->
+  <main id="main-view">
+    <div id="empty-placeholder">
+      <div class="bubble">Выберите чат или нажмите <b>+</b>, чтобы начать диалог</div>
+    </div>
+
+    <div id="active-chat-container" hidden>
+      <div id="chat-header">
+        <button id="btn-back">⬅️</button>
+        <div class="chat-avatar" id="header-peer-avatar" style="width:40px;height:40px;font-size:14px">?</div>
+        <div class="peer-details">
+          <b id="chat-peer-name">Собеседник</b>
+          <span id="chat-peer-status">в сети</span>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="btn-call-audio" title="Аудиозвонок">📞</button>
+          <button class="icon-btn" id="btn-call-video" title="Видеозвонок">📹</button>
+        </div>
+      </div>
+
+      <div id="contact-safety-banner" hidden>
+        <span class="safety-title">Этого пользователя нет в ваших контактах</span>
+        <div class="safety-btns">
+          <button class="btn-sm btn-sm-add" id="btn-banner-add">➕ Добавить в контакты</button>
+          <button class="btn-sm btn-sm-block" id="btn-banner-block">🚫 Заблокировать</button>
+        </div>
+      </div>
+
+      <div id="log"></div>
+
+      <div id="stickers-popover" hidden>
+        <span>👍</span><span>❤️</span><span>🔥</span><span>😎</span><span>😂</span>
+        <span>🚀</span><span>🎉</span><span>⚡</span><span>🤝</span><span>👾</span>
+        <span>🐱</span><span>🍕</span><span>🏆</span><span>👀</span><span>💯</span>
+      </div>
+
+      <form id="composer">
+        <button type="button" class="icon-btn" id="btn-stickers" title="Стикеры">😊</button>
+        <label class="icon-btn" title="Прикрепить файл" style="cursor:pointer">
+          📎
+          <input type="file" id="file-input" hidden>
+        </label>
+        <textarea id="draft" rows="1" placeholder="Написать сообщение..." maxlength="4000"></textarea>
+        <button type="button" class="icon-btn" id="btn-voice-rec" title="Голосовое">🎙️</button>
+        <button type="button" class="icon-btn" id="btn-circle-rec" title="Кружочек">🟢</button>
+        <button id="btn-send" type="submit" disabled>➤</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Модалка: Новый чат со встроенным сканером камеры -->
+  <div class="modal" id="modal-new-chat" hidden>
+    <div class="modal-body">
+      <h3 style="margin:0 0 10px">Новый чат</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Введите номер или наведите камеру на QR-код друга:</p>
+      
+      <div class="form-group" style="margin-bottom:10px">
+        <input class="input-text" id="new-peer-phone" placeholder="+7 999 000-11-22">
+      </div>
+
+      <button class="btn-primary" id="btn-toggle-scan" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--line);margin-top:0;display:flex;align-items:center;justify-content:center;gap:8px">
+        📷 <span>Сканировать QR-код камерой</span>
+      </button>
+
+      <!-- Окно видоискателя сканера -->
+      <div id="qr-scanner-box" hidden style="margin-top:12px">
+        <div id="qr-reader"></div>
+        <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0">Наведите камеру на QR-код профиля</p>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-primary" id="btn-start-new-chat">Начать чат</button>
+        <button class="btn-primary" id="btn-close-new-chat" style="background:var(--surface-2);color:var(--ink)">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="circle-recorder" hidden>
+    <video id="circle-preview" autoplay playsinline muted></video>
+    <div class="rec-timer" id="circle-timer">00:00</div>
+    <div style="display:flex;gap:12px">
+      <button class="btn-primary" id="btn-circle-stop" style="background:var(--ok);width:auto;padding:10px 20px">Отправить</button>
+      <button class="btn-primary" id="btn-circle-cancel" style="background:transparent;border:1px solid #fff;width:auto;padding:10px 20px">Отмена</button>
+    </div>
+  </div>
+
+  <div id="call-overlay" hidden>
+    <div id="call-peer-title" style="font-size:18px;margin-bottom:12px">Звонок...</div>
+    <div id="call-videos">
+      <video id="remote-video" autoplay playsinline></video>
+      <video id="local-video" autoplay playsinline muted></video>
+    </div>
+    <div class="call-actions">
+      <button class="btn-round" id="btn-mute-mic" style="background:#444;color:#fff">🎤</button>
+      <button class="btn-round" id="btn-mute-cam" style="background:#444;color:#fff">📷</button>
+      <button class="btn-round btn-hangup" id="btn-hangup">📞</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-incoming-call" hidden>
+    <div class="modal-body">
+      <h3>Входящий вызов</h3>
+      <p id="inc-call-desc" style="color:var(--muted)">Собеседник вызывает вас...</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+        <button class="btn-primary" id="btn-inc-video" style="background:var(--ok)">С видео</button>
+        <button class="btn-primary" id="btn-inc-audio">Только звук</button>
+        <button class="btn-primary" id="btn-inc-reject" style="background:var(--danger)">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-qr" hidden>
+    <div class="modal-body">
+      <h3>Ваш QR-код</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Покажите его собеседнику для сканирования камерой:</p>
+      <div id="qr-box" style="margin:16px auto;display:flex;justify-content:center"></div>
+      <button class="btn-primary" id="btn-close-qr">Закрыть</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const $ = id => document.getElementById(id);
+const te = new TextEncoder(), td = new TextDecoder();
+
+function cleanPhone(p){
+  let s = (p || "").replace(/\D/g, "");
+  if (s.length === 11 && s.startsWith("8")) s = "7" + s.slice(1);
+  return s;
+}
+
+function b64(buf){
+  const b = new Uint8Array(buf); let s = "";
+  for (let i=0;i<b.length;i++) s += String.fromCharCode(b[i]);
+  return btoa(s);
+}
+function unb64(str){
+  const s = atob(str), b = new Uint8Array(s.length);
+  for (let i=0;i<s.length;i++) b[i] = s.charCodeAt(i);
+  return b;
+}
+
+function getMimeType(type){
+  const candidates = type === "video" 
+    ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
+    : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+  for (const c of candidates){
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return "";
+}
+
+/* ================= ДАННЫЕ ================= */
+let myPhone = localStorage.getItem("msgr_phone") || "";
+let myNick = localStorage.getItem("msgr_nick") || "";
+let myAvatar = localStorage.getItem("msgr_avatar") || "";
+let chats = JSON.parse(localStorage.getItem("msgr_chats") || "{}");
+let contacts = JSON.parse(localStorage.getItem("msgr_contacts") || "[]");
+let blockedUsers = JSON.parse(localStorage.getItem("msgr_blocked") || "[]");
+
+function checkAutoDelete(){
+  const lastActive = parseInt(localStorage.getItem("msgr_last_active") || "0", 10);
+  const months = parseInt(localStorage.getItem("msgr_autodelete_months") || "6", 10);
+  if (lastActive && months > 0){
+    const diffMs = Date.now() - lastActive;
+    if (diffMs > months * 30 * 24 * 60 * 60 * 1000){
+      localStorage.clear();
+      alert("Аккаунт был удалён из-за отсутствия активности.");
+      location.reload();
+      return true;
+    }
+  }
+  localStorage.setItem("msgr_last_active", Date.now().toString());
+  return false;
+}
+
+/* ================= E2EE ШИФРОВАНИЕ ================= */
+let ME = null;
+let sessionKeys = {};
+
+async function initCrypto(){
+  const pair = await crypto.subtle.generateKey({name:"ECDH", namedCurve:"P-256"}, true, ["deriveBits"]);
+  const pubRaw = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
+  ME = { priv: pair.privateKey, pubRaw, pubB64: b64(pubRaw) };
+}
+
+async function derivePeerKey(phone, peerPubB64){
+  try{
+    const peerPubRaw = unb64(peerPubB64);
+    const theirPub = await crypto.subtle.importKey("raw", peerPubRaw, {name:"ECDH", namedCurve:"P-256"}, false, []);
+    const bits = await crypto.subtle.deriveBits({name:"ECDH", public: theirPub}, ME.priv, 256);
+    const salt = new Uint8Array(32);
+    const ikm = await crypto.subtle.importKey("raw", bits, {name:"HKDF"}, false, ["deriveKey"]);
+    sessionKeys[phone] = await crypto.subtle.deriveKey(
+      {name:"HKDF", hash:"SHA-256", salt, info: te.encode("f1nplay-secure-session")},
+      ikm, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]
+    );
+  }catch(e){
+    console.error("Crypto error:", e);
+  }
+}
+
+async function encryptData(phone, kind, payload){
+  const k = sessionKeys[phone];
+  if (!k) return { kind, payload, raw: true };
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, te.encode(JSON.stringify({kind, payload})));
+  return { iv: b64(iv), data: b64(enc), ts: Date.now() };
+}
+
+async function decryptData(phone, envelope){
+  if (envelope.raw) return { kind: envelope.kind, payload: envelope.payload };
+  const k = sessionKeys[phone];
+  if (!k) return { kind: envelope.kind, payload: envelope.payload };
+  const iv = unb64(envelope.iv);
+  const data = unb64(envelope.data);
+  const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, k, data);
+  return JSON.parse(td.decode(dec));
+}
+
+/* ================= СЕТЬ PEERJS ================= */
+let peer = null;
+let activeConnections = {};
+let activeCall = null;
+let pendingIncomingCall = null;
+let localStream = null;
+let activeChatPhone = null;
+
+function getPeerId(phone){ return "f1nplay-app-" + cleanPhone(phone); }
+
+function setupPeer(){
+  if (!myPhone) return;
+  const id = getPeerId(myPhone);
+  if (peer && !peer.destroyed) peer.destroy();
+
+  peer = new Peer(id, {
+    debug: 1,
+    config: {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun.cloudflare.com:3478" }
+      ]
+    }
+  });
+
+  peer.on("open", () => {
+    $("status-text").textContent = "В сети";
+    $("status-text").style.color = "var(--ok)";
+  });
+
+  peer.on("disconnected", () => {
+    $("status-text").textContent = "Переподключение...";
+    $("status-text").style.color = "var(--warn)";
+    setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
+  });
+
+  peer.on("error", (err) => {
+    console.warn("Peer error:", err.type);
+    if (err.type === "peer-unavailable"){
+      if (activeChatPhone){
+        appendSys("Собеседник сейчас не в сети.");
+        $("chat-peer-status").textContent = "не в сети";
+        $("chat-peer-status").style.color = "var(--muted)";
+      }
+    } else if (err.type === "unavailable-id"){
+      alert("Этот номер телефона уже запущен в другой вкладке или окне!");
+    } else {
+      $("status-text").textContent = "В сети";
+      $("status-text").style.color = "var(--ok)";
+    }
+  });
+
+  peer.on("connection", conn => {
+    const incomingPhone = conn.peer.replace("f1nplay-app-", "");
+    if (blockedUsers.includes(incomingPhone)){
+      conn.close();
+      return;
+    }
+    activeConnections[incomingPhone] = conn;
+    wireIncomingConnection(incomingPhone, conn);
+  });
+
+  peer.on("call", call => {
+    const callerPhone = call.peer.replace("f1nplay-app-", "");
+    if (blockedUsers.includes(callerPhone)){
+      call.close();
+      return;
+    }
+    pendingIncomingCall = call;
+    $("inc-call-desc").textContent = "Звонит: " + (chats[callerPhone]?.nick || "+" + callerPhone);
+    $("modal-incoming-call").hidden = false;
+  });
+}
+
+function wireIncomingConnection(phone, conn){
+  conn.on("open", () => {
+    conn.send({
+      type: "handshake",
+      nick: myNick,
+      phone: myPhone,
+      avatar: myAvatar,
+      pubKey: ME.pubB64
+    });
+  });
+
+  conn.on("data", async data => {
+    if (blockedUsers.includes(phone)) return;
+
+    if (data.type === "handshake" || data.type === "handshake_ack"){
+      await derivePeerKey(phone, data.pubKey);
+      upsertChat(phone, data.nick, data.avatar, "В сети");
+
+      if (data.type === "handshake"){
+        conn.send({
+          type: "handshake_ack",
+          nick: myNick,
+          phone: myPhone,
+          avatar: myAvatar,
+          pubKey: ME.pubB64
+        });
+      }
+
+      if (activeChatPhone === phone){
+        updateChatHeader(data.nick, phone, data.avatar);
+        $("chat-peer-status").textContent = "в сети";
+        $("chat-peer-status").style.color = "var(--ok)";
+      }
+      return;
+    }
+
+    if (data.type === "call_hangup"){
+      cleanUpCall();
+      return;
+    }
+
+    try{
+      const msg = await decryptData(phone, data);
+      upsertChat(phone, chats[phone]?.nick, chats[phone]?.avatar, msg.kind === "text" ? msg.payload : "[Медиа]");
+
+      if (activeChatPhone === phone){
+        appendMessage(msg, false);
+      }
+    }catch(e){
+      console.error(e);
+    }
+  });
+
+  conn.on("close", () => {
+    if (activeChatPhone === phone){
+      $("chat-peer-status").textContent = "был(а) недавно";
+      $("chat-peer-status").style.color = "var(--muted)";
+    }
+  });
+}
+
+/* ================= ДИАЛОГИ И КОНТАКТЫ ================= */
+function upsertChat(phone, nick, avatar, lastMsg){
+  if (!phone) return;
+  const p = cleanPhone(phone);
+  chats[p] = {
+    phone: p,
+    nick: nick || chats[p]?.nick || ("+" + p),
+    avatar: avatar || chats[p]?.avatar || "",
+    lastMsg: lastMsg || chats[p]?.lastMsg || "",
+    time: new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
+  };
+  localStorage.setItem("msgr_chats", JSON.stringify(chats));
+  renderChatsList();
+  renderContactsList();
+}
+
+function renderChatsList(){
+  const box = $("chats-list");
+  box.innerHTML = "";
+  const list = Object.values(chats);
+  if (!list.length){
+    box.innerHTML = '<p style="text-align:center;padding:24px;color:var(--muted);font-size:13.5px">Нет диалогов.<br>Нажмите <b>+</b>, чтобы написать</p>';
+    return;
+  }
+  list.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "chat-item";
+    const av = c.avatar ? `<img src="${c.avatar}">` : (c.nick ? c.nick[0].toUpperCase() : "?");
+    el.innerHTML = `
+      <div class="chat-avatar">${av}</div>
+      <div class="chat-meta">
+        <div class="chat-top">
+          <span class="chat-name">${c.nick}</span>
+          <span class="chat-time">${c.time || ""}</span>
+        </div>
+        <div class="chat-preview">${c.lastMsg || c.phone}</div>
+      </div>
+    `;
+    el.onclick = () => openChat(c.phone);
+    box.appendChild
