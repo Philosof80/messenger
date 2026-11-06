@@ -112,113 +112,109 @@ button,input,textarea,select{font:inherit;color:inherit}
 
 /* Облачко сообщений */
 .msg{
-  max-width: 85%;
-  min-width: 60px;
-  width: fit-content;
-  padding: 8px 12px;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  align-self: flex-start;
-  overflow-wrap: anywhere;
-  box-sizing: border-box;
+  max-width:min(85%, 340px);
+  padding:8px 12px;
+  border-radius:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  align-self:flex-start;
+  overflow-wrap:anywhere;
+  box-sizing:border-box;
 }
 .msg.mine{
-  align-self: flex-end;
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: transparent;
+  align-self:flex-end;
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:transparent;
 }
 .msg .meta{
-  font-family: var(--mono);
-  font-size: 10px;
-  opacity: .7;
-  margin-top: 4px;
-  text-align: right;
+  font-family:var(--mono);
+  font-size:10px;
+  opacity:.7;
+  margin-top:4px;
+  text-align:right;
 }
 .msg-img{max-width:260px;max-height:260px;border-radius:10px;object-fit:cover;cursor:pointer;margin-bottom:4px}
 .circle-video{width:220px;height:220px;border-radius:50%;object-fit:cover;overflow:hidden;border:3px solid var(--telegram-blue);cursor:pointer}
 .sticker-img{font-size:52px;line-height:1;user-select:none;display:inline-block}
 
-/* Аудиоплеер внутри сообщения */
-.audio-msg {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 250px;
+/* Аудиоплеер */
+.audio-msg{
+  display:block;
+  width:260px;
+  max-width:100%;
 }
-.audio-msg audio {
-  width: 100% !important;
-  max-width: 100%;
-  height: 40px;
-  border-radius: 20px;
-  outline: none;
+.audio-msg audio{
+  display:block;
+  width:100%;
+  height:44px;
+  outline:none;
 }
 
-/* Панель ввода сообщений (стиль Telegram) */
-#composer {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  padding: 8px 10px;
-  background: var(--surface);
-  border-top: 1px solid var(--line);
-  box-sizing: border-box;
-  width: 100%;
+/* Панель ввода сообщений */
+#composer{
+  display:flex;
+  align-items:flex-end;
+  gap:6px;
+  padding:8px 10px;
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  box-sizing:border-box;
+  width:100%;
 }
-.composer-btn {
-  background: none;
-  border: none;
-  padding: 8px 6px;
-  cursor: pointer;
-  font-size: 20px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-#draft {
-  flex: 1 1 auto;
-  min-width: 0; /* Предотвращает сплющивание в узкий столбик */
-  max-height: 120px;
-  min-height: 38px;
-  height: 38px;
-  padding: 8px 14px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface-2);
-  font-size: 15px;
-  line-height: 1.35;
-  resize: none;
-  box-sizing: border-box;
-  color: var(--ink);
-}
-#draft:focus {
-  outline: none;
-  border-color: var(--telegram-blue);
+.composer-btn{
+  background:none;
+  border:none;
+  padding:8px 6px;
+  cursor:pointer;
+  font-size:20px;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  line-height:1;
 }
 
-#btn-send {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--telegram-blue);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-  margin-bottom: 1px;
+#draft{
+  flex:1 1 auto;
+  min-width:0;
+  max-height:120px;
+  min-height:38px;
+  height:38px;
+  padding:8px 14px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface-2);
+  font-size:15px;
+  line-height:1.35;
+  resize:none;
+  box-sizing:border-box;
+  color:var(--ink);
 }
-#btn-send:disabled {
-  opacity: .4;
-  cursor: default;
+#draft:focus{
+  outline:none;
+  border-color:var(--telegram-blue);
+}
+
+#btn-send{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:var(--telegram-blue);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+  margin-bottom:1px;
+}
+#btn-send:disabled{
+  opacity:.4;
+  cursor:default;
 }
 
 /* Настройки */
@@ -394,7 +390,6 @@ button,input,textarea,select{font:inherit;color:inherit}
         <span>🐱</span><span>🍕</span><span>🏆</span><span>👀</span><span>💯</span>
       </div>
 
-      <!-- Исправленный composer -->
       <form id="composer">
         <button type="button" class="composer-btn" id="btn-stickers" title="Стикеры">😊</button>
         <label class="composer-btn" title="Прикрепить файл" style="cursor:pointer;margin:0">
@@ -571,7 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function decryptData(phone, envelope){
     if (envelope.raw) return { kind: envelope.kind, payload: envelope.payload };
     const k = sessionKeys[phone];
-    if (!k || !window.crypto || !window.crypto.subtle) return { kind, envelope };
+    if (!k || !window.crypto || !window.crypto.subtle) return { kind: envelope.kind, payload: envelope.payload };
     try{
       const iv = unb64(envelope.iv);
       const data = unb64(envelope.data);
@@ -713,7 +708,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try{
         const msg = await decryptData(phone, data);
-        upsertChat(phone, chats[phone]?.nick, chats[phone]?.avatar, msg.kind === "text" ? msg.payload : "[Медиа]");
+        const preview = msg.kind === "text" ? msg.payload : (msg.kind === "voice" ? "Голосовое сообщение" : (msg.kind === "circle" ? "Видеосообщение" : "[Медиа]"));
+        upsertChat(phone, chats[phone]?.nick, chats[phone]?.avatar, preview);
+
+        saveMessageToHistory(phone, {
+          kind: msg.kind,
+          payload: msg.payload,
+          isMine: false,
+          ts: Date.now()
+        });
 
         if (activeChatPhone === phone){
           appendMessage(msg, false);
@@ -729,6 +732,30 @@ document.addEventListener("DOMContentLoaded", () => {
         $("chat-peer-status").style.color = "var(--muted)";
       }
     });
+  }
+
+  /* История переписки */
+  function getHistoryKey(phone){
+    return "msgr_hist_" + cleanPhone(phone);
+  }
+
+  function loadChatHistory(phone){
+    try{
+      return JSON.parse(localStorage.getItem(getHistoryKey(phone)) || "[]");
+    }catch(e){
+      return [];
+    }
+  }
+
+  function saveMessageToHistory(phone, msgObj){
+    const hist = loadChatHistory(phone);
+    hist.push(msgObj);
+    if (hist.length > 200) hist.shift();
+    try{
+      localStorage.setItem(getHistoryKey(phone), JSON.stringify(hist));
+    }catch(e){
+      console.warn("Storage quota exceeded", e);
+    }
   }
 
   /* Диалоги */
@@ -812,6 +839,12 @@ document.addEventListener("DOMContentLoaded", () => {
     $("active-chat-container").hidden = false;
     $("log").innerHTML = "";
     $("sidebar").classList.add("hide-mobile");
+
+    /* Загрузка истории */
+    const history = loadChatHistory(activeChatPhone);
+    history.forEach(m => {
+      appendMessage(m, m.isMine, m.ts);
+    });
 
     let conn = activeConnections[activeChatPhone];
     if (!conn || !conn.open){
@@ -898,11 +931,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const envelope = await encryptData(activeChatPhone, kind, payload);
     conn.send(envelope);
+
+    saveMessageToHistory(activeChatPhone, {
+      kind,
+      payload,
+      isMine: true,
+      ts: Date.now()
+    });
+
     appendMessage({ kind, payload }, true);
-    upsertChat(activeChatPhone, chats[activeChatPhone]?.nick, chats[activeChatPhone]?.avatar, kind === "text" ? payload : "[Медиа]");
+    const preview = kind === "text" ? payload : (kind === "voice" ? "Голосовое сообщение" : (kind === "circle" ? "Видеосообщение" : "[Медиа]"));
+    upsertChat(activeChatPhone, chats[activeChatPhone]?.nick, chats[activeChatPhone]?.avatar, preview);
   }
 
-  function appendMessage(msg, isMine){
+  function appendMessage(msg, isMine, timestamp){
     const log = $("log");
     const el = document.createElement("div");
     el.className = "msg" + (isMine ? " mine" : "");
@@ -953,7 +995,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    const d = timestamp ? new Date(timestamp) : new Date();
+    meta.textContent = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
     el.appendChild(meta);
 
     log.appendChild(el);
@@ -1131,7 +1174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pendingIncomingCall = null;
   };
 
-  /* QR-сканер */
+  /* Сканер QR */
   let html5QrScanner = null;
 
   async function startQrScanner(){
@@ -1146,10 +1189,21 @@ document.addEventListener("DOMContentLoaded", () => {
     try{
       await html5QrScanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
+        {
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return {
+              width: Math.floor(minEdge * 0.8),
+              height: Math.floor(minEdge * 0.8)
+            };
+          },
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          }
+        },
         (decodedText) => {
-          let phone = decodedText.replace("msgr:", "").trim();
-          phone = cleanPhone(phone);
+          let phone = cleanPhone(decodedText);
           if (phone){
             $("new-peer-phone").value = "+" + phone;
             stopQrScanner();
@@ -1303,7 +1357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initApp();
   };
 
-  /* Автоматическое растягивание textarea вверх при вводе текста */
+  /* Поле ввода */
   const draft = $("draft");
   draft.addEventListener("input", () => {
     draft.style.height = "auto";
