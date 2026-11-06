@@ -35,7 +35,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 
 #app{height:100vh;display:flex;overflow:hidden;position:relative}
 
-/* 1. Регистрация и Вход */
+/* Авторизация */
 #auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-box{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:32px 28px;text-align:center;box-shadow:0 12px 36px rgba(0,0,0,0.25)}
 .auth-logo{font-size:48px;margin-bottom:12px}
@@ -55,7 +55,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 .avatar-picker{width:86px;height:86px;border-radius:50%;margin:0 auto 16px;background:var(--surface-2);border:2px dashed var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
 .avatar-picker img{width:100%;height:100%;object-fit:cover}
 
-/* 2. Сайдбар */
+/* Сайдбар */
 #sidebar{width:360px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;position:relative}
 @media (max-width:768px){
   #sidebar{width:100%;position:absolute;inset:0;z-index:20;transition:transform .25s ease}
@@ -80,6 +80,7 @@ button,input,textarea,select{font:inherit;color:inherit}
   position:absolute;right:18px;bottom:72px;width:54px;height:54px;border-radius:50%;
   background:var(--telegram-blue);color:#ffffff;border:none;box-shadow:0 4px 16px rgba(36,129,204,0.45);
   display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;z-index:30;transition:transform .2s;
+  user-select:none;-webkit-user-select:none;
 }
 #fab-new-chat:hover{transform:scale(1.06)}
 
@@ -88,7 +89,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 .tab-btn span.tab-icon{font-size:19px;line-height:1}
 .tab-btn.active{color:var(--telegram-blue)}
 
-/* 3. Правая панель */
+/* Правая панель */
 #main-view{flex:1;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
 #empty-placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:24px}
 #empty-placeholder .bubble{background:var(--surface);padding:14px 22px;border-radius:24px;border:1px solid var(--line);font-size:14.5px}
@@ -208,7 +209,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 }
 #btn-send:disabled{opacity:.4;cursor:default}
 
-/* 4. Настройки */
+/* Настройки */
 #settings-view{padding:24px 20px;overflow-y:auto;flex:1}
 .settings-wrap{max-width:480px;margin:0 auto}
 .settings-avatar-box{text-align:center;margin-bottom:24px}
@@ -226,11 +227,11 @@ button,input,textarea,select{font:inherit;color:inherit}
 .modal-body{background:var(--surface);border-radius:20px;padding:24px;width:100%;max-width:400px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.4)}
 
 #qr-reader{width:100%;border-radius:14px;overflow:hidden;background:#000;margin-top:10px}
-#circle-recorder{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#circle-recorder{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #circle-preview{width:260px;height:260px;border-radius:50%;object-fit:cover;border:4px solid #fff}
 .rec-timer{color:#fff;font-family:var(--mono);font-size:18px;font-weight:600}
 
-/* ================= 5. ЭКРАН ЗВОНКА (TELEGRAM/WHATSAPP STYLE) ================= */
+/* Звонки */
 #call-overlay{
   position:fixed;inset:0;background:radial-gradient(circle at center, #1b2836 0%, #0c141d 100%);
   z-index:1800;display:flex;flex-direction:column;justify-content:space-between;
@@ -248,7 +249,6 @@ button,input,textarea,select{font:inherit;color:inherit}
   box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:5;transition:all .3s ease;
 }
 
-/* Аватар при аудиозвонке в стиле Telegram */
 .call-avatar-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;position:relative}
 .call-avatar-pulse{
   width:140px;height:140px;border-radius:50%;background:rgba(36,129,204,0.18);
@@ -267,7 +267,6 @@ button,input,textarea,select{font:inherit;color:inherit}
   100%{box-shadow:0 0 0 0 rgba(36,129,204,0), 0 0 0 0 rgba(36,129,204,0)}
 }
 
-/* Панель кнопок вызова */
 .call-actions{
   display:flex;gap:18px;align-items:center;justify-content:center;
   background:rgba(23,33,43,0.75);backdrop-filter:blur(14px);
@@ -286,7 +285,6 @@ button,input,textarea,select{font:inherit;color:inherit}
 .btn-hangup{background:var(--danger);color:#fff;width:62px;height:62px;font-size:26px}
 .btn-hangup:hover{background:#d32f2f}
 
-/* Окно входящего вызова */
 .inc-call-box{display:flex;flex-direction:column;align-items:center;padding:8px 0}
 .inc-call-avatar{width:90px;height:90px;border-radius:50%;margin-bottom:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:600;color:var(--telegram-blue);overflow:hidden;border:2px solid var(--telegram-blue)}
 .inc-call-avatar img{width:100%;height:100%;object-fit:cover}
@@ -298,13 +296,30 @@ button,input,textarea,select{font:inherit;color:inherit}
   70%{box-shadow:0 0 0 16px rgba(79,175,130,0)}
   100%{box-shadow:0 0 0 0 rgba(79,175,130,0)}
 }
+
+/* Секретный кликер */
+.clicker-btn{
+  width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #ff4d4d, #cc0000 70%, #990000 100%);
+  box-shadow:0 10px 0 #730000, 0 14px 20px rgba(0,0,0,0.4);
+  border:none;cursor:pointer;margin:20px auto;display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:18px;font-weight:700;
+  transition:all 0.08s ease;user-select:none;-webkit-user-select:none;
+}
+.clicker-btn:active{
+  transform:translateY(8px);
+  box-shadow:0 2px 0 #730000, 0 6px 12px rgba(0,0,0,0.3);
+}
+.clicker-counter{
+  font-family:var(--mono);font-size:36px;font-weight:700;color:var(--telegram-blue);margin:8px 0;
+}
 </style>
 </head>
 <body>
 
 <div id="app">
 
-  <!-- Экран авторизации -->
+  <!-- Авторизация -->
   <div id="auth-screen">
     <div class="auth-box">
       <div class="auth-logo">💬</div>
@@ -416,7 +431,8 @@ button,input,textarea,select{font:inherit;color:inherit}
           <div class="card">
             <div class="card-title">Безопасность</div>
             <button class="btn-primary" id="btn-open-my-qr" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);margin-bottom:8px">Показать мой QR-код</button>
-            <button class="btn-primary" id="btn-logout" style="background:var(--danger)">Выйти из аккаунта</button>
+            <button class="btn-primary" id="btn-logout" style="background:var(--surface-2);border:1px solid var(--line);color:var(--ink);margin-bottom:8px">Выйти из аккаунта</button>
+            <button class="btn-primary" id="btn-delete-account" style="background:var(--danger)">Удалить аккаунт</button>
           </div>
         </div>
       </div>
@@ -516,17 +532,18 @@ button,input,textarea,select{font:inherit;color:inherit}
     </div>
   </div>
 
-  <!-- Окно записи кружочка -->
+  <!-- Модалка записи видео-кружочка -->
   <div id="circle-recorder" hidden>
     <video id="circle-preview" autoplay playsinline muted></video>
     <div class="rec-timer" id="circle-timer">00:00</div>
-    <div style="display:flex;gap:12px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="btn-primary" id="btn-circle-switch-cam" style="background:var(--surface-2);border:1px solid rgba(255,255,255,0.4);color:#fff;width:auto;padding:8px 14px;font-size:13px">📷 Сменить камеру / Ноутбук</button>
       <button class="btn-primary" id="btn-circle-stop" style="background:var(--ok);width:auto;padding:10px 20px">Отправить</button>
       <button class="btn-primary" id="btn-circle-cancel" style="background:transparent;border:1px solid #fff;width:auto;padding:10px 20px">Отмена</button>
     </div>
   </div>
 
-  <!-- Полноэкранный интерфейс звонка (Telegram/WhatsApp style) -->
+  <!-- Полноэкранный интерфейс звонка -->
   <div id="call-overlay" hidden>
     <div class="call-header">
       <div class="call-peer-title" id="call-peer-title">Собеседник</div>
@@ -537,7 +554,6 @@ button,input,textarea,select{font:inherit;color:inherit}
       <video id="remote-video" autoplay playsinline hidden></video>
       <video id="local-video" autoplay playsinline muted hidden></video>
       
-      <!-- Заглушка аудиовызова с пульсирующим аватаром -->
       <div class="call-avatar-wrap" id="call-avatar-placeholder">
         <div class="call-avatar-pulse">
           <div class="call-avatar-img" id="call-avatar-img">?</div>
@@ -555,7 +571,7 @@ button,input,textarea,select{font:inherit;color:inherit}
         <span>Камера</span>
       </div>
       <div class="call-btn-item">
-        <button class="btn-round" id="btn-flip-cam" title="Сменить камеру">🔄</button>
+        <button class="btn-round" id="btn-flip-cam" title="Сменить камеру / Ноутбук">🔄</button>
         <span>Камера</span>
       </div>
       <div class="call-btn-item">
@@ -565,7 +581,7 @@ button,input,textarea,select{font:inherit;color:inherit}
     </div>
   </div>
 
-  <!-- Модалка входящего звонка (Telegram style) -->
+  <!-- Модалка входящего звонка -->
   <div class="modal" id="modal-incoming-call" hidden>
     <div class="modal-body">
       <div class="inc-call-box">
@@ -597,6 +613,18 @@ button,input,textarea,select{font:inherit;color:inherit}
     </div>
   </div>
 
+  <!-- Секретный кликер -->
+  <div class="modal" id="modal-secret-clicker" hidden>
+    <div class="modal-body">
+      <div class="clicker-counter" id="secret-counter-display">0</div>
+      <button class="clicker-btn" id="btn-secret-click">КЛИК</button>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        <button class="btn-primary" id="btn-secret-reset" style="background:var(--surface-2);color:var(--ink);width:auto;padding:8px 16px">Сброс</button>
+        <button class="btn-primary" id="btn-secret-close" style="width:auto;padding:8px 20px">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -621,7 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return b;
   }
 
-  /* ================= 1. ЗВУКИ ВЫЗОВА (Web Audio API) ================= */
+  /* ================= 1. ЗВУКИ ВЫЗОВА (Мягкие гармоники Web Audio) ================= */
   let audioCtx = null;
   let activeOscillators = [];
   let ringInterval = null;
@@ -639,76 +667,64 @@ document.addEventListener("DOMContentLoaded", () => {
     activeOscillators = [];
   }
 
-  // Мелодичный рингтон входящего вызова (в стиле Telegram)
+  function playSoftChime(freq, startTime, duration = 0.5, volume = 0.08){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+    activeOscillators.push(osc);
+  }
+
+  // Мягкий и приятный перезвон входящего звонка
   function playIncomingRingtone(){
     ensureAudioCtx();
     stopAllSounds();
 
     const ringStep = () => {
       const now = audioCtx.currentTime;
-      const notes = [440, 554.37, 659.25, 880];
-      notes.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-        gain.gain.setValueAtTime(0, now + idx * 0.12);
-        gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.12 + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.35);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now + idx * 0.12);
-        osc.stop(now + idx * 0.12 + 0.4);
-        activeOscillators.push(osc);
-      });
+      // Мягкая пентатоника
+      playSoftChime(587.33, now + 0.0, 0.45, 0.08); // D5
+      playSoftChime(739.99, now + 0.15, 0.45, 0.08); // F#5
+      playSoftChime(880.00, now + 0.30, 0.50, 0.09); // A5
+      playSoftChime(1174.66, now + 0.48, 0.65, 0.07); // D6
     };
 
     ringStep();
-    ringInterval = setInterval(ringStep, 2200);
+    ringInterval = setInterval(ringStep, 2400);
   }
 
-  // Гудки ожидания при исходящем вызове
+  // Мягкие гудки при исходящем звонке
   function playOutgoingRingback(){
     ensureAudioCtx();
     stopAllSounds();
 
     const beepStep = () => {
       const now = audioCtx.currentTime;
-      [425, 450].forEach(freq => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 1.2);
-        activeOscillators.push(osc);
+      [440, 554.37].forEach(f => {
+        playSoftChime(f, now, 1.1, 0.045);
       });
     };
 
     beepStep();
-    ringInterval = setInterval(beepStep, 3800);
+    ringInterval = setInterval(beepStep, 3600);
   }
 
-  // Короткие гудки отбоя
+  // Мягкий отбой
   function playHangupTone(){
     ensureAudioCtx();
     stopAllSounds();
     const now = audioCtx.currentTime;
-    for(let i=0; i<3; i++){
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(425, now + i * 0.28);
-      gain.gain.setValueAtTime(0.15, now + i * 0.28);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.28 + 0.18);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now + i * 0.28);
-      osc.stop(now + i * 0.28 + 0.2);
+    for(let i=0; i<2; i++){
+      playSoftChime(392, now + i * 0.25, 0.18, 0.07);
     }
   }
 
@@ -917,7 +933,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeChatId = null;
   let incomingChunks = {};
   let callTimerInterval = null;
-  let currentFacingMode = "user";
+
+  /* Управление камерами для ноутбука и телефона */
+  let videoDevicesList = [];
+  let currentCameraIndex = 0;
+
+  async function updateVideoDevices(){
+    try{
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      videoDevicesList = devs.filter(d => d.kind === "videoinput");
+    }catch(e){
+      videoDevicesList = [];
+    }
+  }
 
   function getPeerNamespace(id){ return "f1nplay-id-" + cleanId(id); }
 
@@ -976,7 +1004,6 @@ document.addEventListener("DOMContentLoaded", () => {
       wireIncomingConnection(incomingId, conn);
     });
 
-    // Обработка входящего звонка в стиле Telegram
     peer.on("call", call => {
       const callerId = call.peer.replace("f1nplay-id-", "");
       if (blockedUsers.includes(callerId)){
@@ -987,7 +1014,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pendingIncomingCall = call;
       const callerInfo = chats[callerId] || { nick: "ID: " + callerId, avatar: "" };
 
-      // Запуск рингтона
       playIncomingRingtone();
 
       $("inc-call-name").textContent = callerInfo.nick;
@@ -1284,7 +1310,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("btn-back").onclick = () => { $("sidebar").classList.remove("hide-mobile"); };
 
-  /* Сообщения и Оффлайн-очередь */
+  /* Сообщения и оффлайн-очередь */
   async function sendMessage(kind, payload){
     const targetId = activeChatId;
     const msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
@@ -1449,15 +1475,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  /* Видео-кружочки */
+  /* Видео-кружочки с режимом встроенной камеры ноутбука */
   let circleRec = null, circleChunks = [], circleStream = null, circleTimerInterval = null;
-  $("btn-circle-rec").onclick = async () => {
+
+  async function startCircleStream(cameraDeviceId = null){
+    if (circleStream){
+      circleStream.getTracks().forEach(t => t.stop());
+    }
+    await updateVideoDevices();
+
+    let videoConstraints = true;
+    if (cameraDeviceId){
+      videoConstraints = { deviceId: { exact: cameraDeviceId } };
+    } else {
+      videoConstraints = { facingMode: "user" };
+    }
+
     try{
       circleStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
+        video: videoConstraints,
         audio: true
       });
-      $("circle-preview").srcObject = circleStream;
+    }catch(err){
+      // Мягкий откат для ноутбуков, где facingMode: "user" не поддерживается
+      circleStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    }
+
+    $("circle-preview").srcObject = circleStream;
+  }
+
+  $("btn-circle-rec").onclick = async () => {
+    try{
+      await startCircleStream();
       $("circle-recorder").hidden = false;
       circleChunks = [];
 
@@ -1478,6 +1527,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1000);
     }catch(e){
       alert("Не удалось включить камеру для кружочка!");
+    }
+  };
+
+  // Переключение камеры прямо в кружочке (ноутбук / смартфон)
+  $("btn-circle-switch-cam").onclick = async () => {
+    if (!videoDevicesList.length) await updateVideoDevices();
+    if (videoDevicesList.length > 1){
+      currentCameraIndex = (currentCameraIndex + 1) % videoDevicesList.length;
+      await startCircleStream(videoDevicesList[currentCameraIndex].deviceId);
+    } else {
+      await startCircleStream();
     }
   };
 
@@ -1537,7 +1597,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  /* ================= 3. УПРАВЛЕНИЕ ЗВОНКАМИ (TELEGRAM STYLE) ================= */
+  /* ================= 3. ЗВОНКИ (TELEGRAM/WHATSAPP STYLE) ================= */
   let isVideoCallActive = false;
 
   function startCallTimer(){
@@ -1577,21 +1637,32 @@ document.addEventListener("DOMContentLoaded", () => {
     $("btn-mute-mic").classList.remove("muted");
   }
 
+  async function getCallStream(video, deviceId = null){
+    let vConstraints = false;
+    if (video){
+      if (deviceId) vConstraints = { deviceId: { exact: deviceId } };
+      else vConstraints = { facingMode: "user" };
+    }
+
+    try{
+      return await navigator.mediaDevices.getUserMedia({ audio: true, video: vConstraints });
+    }catch(err){
+      // Откат для ноутбуков
+      return await navigator.mediaDevices.getUserMedia({ audio: true, video: video ? true : false });
+    }
+  }
+
   async function startCall(video){
     const targetPeerId = activeChatId;
     const peerInfo = chats[targetPeerId] || { nick: "ID: " + targetPeerId, avatar: "" };
 
     try{
-      currentFacingMode = "user";
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: video ? { facingMode: currentFacingMode } : false
-      });
+      await updateVideoDevices();
+      localStream = await getCallStream(video);
 
       setupCallScreen(peerInfo, video);
       $("local-video").srcObject = localStream;
 
-      // Гудки ожидания ответа
       playOutgoingRingback();
 
       activeCall = peer.call(getPeerNamespace(targetPeerId), localStream, {
@@ -1613,7 +1684,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Принятие входящего звонка
   async function answerCall(withVideo){
     $("modal-incoming-call").hidden = true;
     stopAllSounds();
@@ -1623,11 +1693,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const peerInfo = chats[callerId] || { nick: "ID: " + callerId, avatar: "" };
 
     try{
-      currentFacingMode = "user";
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: withVideo ? { facingMode: currentFacingMode } : false
-      });
+      await updateVideoDevices();
+      localStream = await getCallStream(withVideo);
 
       setupCallScreen(peerInfo, withVideo);
       $("local-video").srcObject = localStream;
@@ -1672,7 +1739,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-call-audio").onclick = () => startCall(false);
   $("btn-call-video").onclick = () => startCall(true);
 
-  // Сброс звонка
   $("btn-hangup").onclick = () => {
     playHangupTone();
     const conn = activeConnections[activeChatId];
@@ -1695,7 +1761,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cleanUpCall();
   };
 
-  // Включение/выключение микрофона во время звонка
   $("btn-mute-mic").onclick = () => {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
@@ -1705,13 +1770,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Включение/выключение камеры во время звонка
   $("btn-mute-cam").onclick = async () => {
     if (!localStream) return;
     const videoTrack = localStream.getVideoTracks()[0];
 
     if (videoTrack){
-      // Камера уже есть - переключаем активность
       videoTrack.enabled = !videoTrack.enabled;
       $("btn-mute-cam").classList.toggle("muted", !videoTrack.enabled);
       $("local-video").hidden = !videoTrack.enabled;
@@ -1719,9 +1782,8 @@ document.addEventListener("DOMContentLoaded", () => {
         $("call-avatar-placeholder").hidden = false;
       }
     } else {
-      // Камера была выключена изначально - подключаем трек на лету
       try{
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+        const newStream = await getCallStream(true);
         const newVideoTrack = newStream.getVideoTracks()[0];
         localStream.addTrack(newVideoTrack);
         $("local-video").srcObject = localStream;
@@ -1729,7 +1791,6 @@ document.addEventListener("DOMContentLoaded", () => {
         $("call-avatar-placeholder").hidden = true;
         $("btn-mute-cam").classList.remove("muted");
 
-        // Замена трека в peer соединении
         if (activeCall && activeCall.peerConnection){
           const senders = activeCall.peerConnection.getSenders();
           const videoSender = senders.find(s => s.track && s.track.kind === "video");
@@ -1742,14 +1803,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Переключение фронтальной/задней камеры (Flip camera)
+  // Переключение камеры в звонках (ноутбук / фронтальная / задняя)
   $("btn-flip-cam").onclick = async () => {
     if (!localStream) return;
-    currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+    await updateVideoDevices();
+
+    let targetDeviceId = null;
+    if (videoDevicesList.length > 1){
+      currentCameraIndex = (currentCameraIndex + 1) % videoDevicesList.length;
+      targetDeviceId = videoDevicesList[currentCameraIndex].deviceId;
+    }
+
     try{
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: currentFacingMode }
-      });
+      const newStream = await getCallStream(true, targetDeviceId);
       const newVideoTrack = newStream.getVideoTracks()[0];
 
       const oldVideoTrack = localStream.getVideoTracks()[0];
@@ -1824,17 +1890,74 @@ document.addEventListener("DOMContentLoaded", () => {
     else startQrScanner();
   };
 
-  /* Новый чат (+) */
-  $("fab-new-chat").onclick = () => {
+  /* ================= 4. КНОПКА «+» И СЕКРЕТНЫЙ КЛИКЕР (7 СЕКУНД) ================= */
+  let secretPressTimer = null;
+  let secretTriggered = false;
+  let secretClicks = parseInt(localStorage.getItem("msgr_secret_clicks") || "0", 10);
+
+  function openSecretClicker(){
+    $("secret-counter-display").textContent = secretClicks;
+    $("modal-secret-clicker").hidden = false;
+  }
+
+  $("btn-secret-click").onclick = () => {
+    secretClicks++;
+    $("secret-counter-display").textContent = secretClicks;
+    localStorage.setItem("msgr_secret_clicks", secretClicks.toString());
+  };
+
+  $("btn-secret-reset").onclick = () => {
+    secretClicks = 0;
+    $("secret-counter-display").textContent = "0";
+    localStorage.setItem("msgr_secret_clicks", "0");
+  };
+
+  $("btn-secret-close").onclick = () => {
+    $("modal-secret-clicker").hidden = true;
+  };
+
+  const fabBtn = $("fab-new-chat");
+
+  const startHold = () => {
+    secretTriggered = false;
+    secretPressTimer = setTimeout(() => {
+      secretTriggered = true;
+      openSecretClicker();
+    }, 7000);
+  };
+
+  const endHold = () => {
+    if (secretPressTimer){
+      clearTimeout(secretPressTimer);
+      secretPressTimer = null;
+    }
+  };
+
+  fabBtn.addEventListener("mousedown", startHold);
+  fabBtn.addEventListener("touchstart", startHold, { passive: true });
+  fabBtn.addEventListener("mouseup", endHold);
+  fabBtn.addEventListener("mouseleave", endHold);
+  fabBtn.addEventListener("touchend", endHold);
+  fabBtn.addEventListener("touchcancel", endHold);
+
+  fabBtn.onclick = e => {
+    if (secretTriggered){
+      e.preventDefault();
+      e.stopPropagation();
+      secretTriggered = false;
+      return;
+    }
     $("new-peer-id").value = "";
     stopQrScanner();
     $("modal-new-chat").hidden = false;
     $("new-peer-id").focus();
   };
+
   $("btn-close-new-chat").onclick = () => {
     stopQrScanner();
     $("modal-new-chat").hidden = true;
   };
+
   $("btn-start-new-chat").onclick = () => {
     const id = cleanId($("new-peer-id").value);
     if (id.length !== 7 || id === cleanId(myId)){
@@ -1887,6 +2010,25 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.clear();
       location.reload();
     }
+  };
+
+  /* Удаление аккаунта */
+  $("btn-delete-account").onclick = () => {
+    const firstConfirm = confirm("Вы действительно хотите удалить свой аккаунт?");
+    if (!firstConfirm) return;
+
+    const secondConfirm = confirm("Все ваши переписки, сохранённые медиа и 7-значный ID будут стёрты навсегда без возможности восстановления. Подтверждаете?");
+    if (!secondConfirm) return;
+
+    try{
+      localStorage.clear();
+      if (window.indexedDB){
+        indexedDB.deleteDatabase("MessengerDB");
+      }
+    }catch(e){}
+
+    alert("Ваш аккаунт и все данные успешно удалены.");
+    location.reload();
   };
 
   $("btn-open-my-qr").onclick = () => {
